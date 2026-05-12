@@ -1,0 +1,26 @@
+# infra/terraform.tfvars.example
+# このファイルをコピーして terraform.tfvars を作成し、実際の値を入力する。
+# terraform.tfvars は .gitignore に追加してコミットしないこと。
+
+subscription_id     = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+location            = "japaneast"
+resource_group_name = "rg-mochi-kiki"
+prefix              = "mochikiki"
+environment         = "dev"
+
+tf_state_resource_group  = "rg-tfstate"
+tf_state_storage_account = "mochikiikitfstate"
+tf_state_container       = "tfstate"
+
+openai_sku         = "S0"
+gpt4o_capacity     = 30
+embedding_capacity = 30
+
+search_sku = "basic"
+
+cosmos_consistency_level = "Session"
+
+acr_sku = "Basic"
+
+bot_min_replicas = 1
+bot_max_replicas = 3
