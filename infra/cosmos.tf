@@ -30,7 +30,7 @@ resource "azurerm_cosmosdb_sql_container" "utterances" {
   resource_group_name = azurerm_resource_group.main.name
   account_name        = azurerm_cosmosdb_account.main.name
   database_name       = azurerm_cosmosdb_sql_database.meeting_db.name
-  partition_key_path  = "/meeting_id"
+  partition_key_paths = ["/meeting_id"]
 
   indexing_policy {
     indexing_mode = "consistent"
@@ -46,7 +46,7 @@ resource "azurerm_cosmosdb_sql_container" "meetings" {
   resource_group_name = azurerm_resource_group.main.name
   account_name        = azurerm_cosmosdb_account.main.name
   database_name       = azurerm_cosmosdb_sql_database.meeting_db.name
-  partition_key_path  = "/id"
+  partition_key_paths = ["/id"]
 
   indexing_policy {
     indexing_mode = "consistent"
@@ -62,7 +62,7 @@ resource "azurerm_cosmosdb_sql_container" "clarification_sessions" {
   resource_group_name = azurerm_resource_group.main.name
   account_name        = azurerm_cosmosdb_account.main.name
   database_name       = azurerm_cosmosdb_sql_database.meeting_db.name
-  partition_key_path  = "/meeting_id"
+  partition_key_paths = ["/meeting_id"]
 
   indexing_policy {
     indexing_mode = "consistent"
@@ -78,7 +78,7 @@ resource "azurerm_cosmosdb_sql_container" "consents" {
   resource_group_name = azurerm_resource_group.main.name
   account_name        = azurerm_cosmosdb_account.main.name
   database_name       = azurerm_cosmosdb_sql_database.meeting_db.name
-  partition_key_path  = "/meeting_id"
+  partition_key_paths = ["/meeting_id"]
 
   indexing_policy {
     indexing_mode = "consistent"
@@ -94,7 +94,7 @@ resource "azurerm_cosmosdb_sql_container" "agent_logs" {
   resource_group_name = azurerm_resource_group.main.name
   account_name        = azurerm_cosmosdb_account.main.name
   database_name       = azurerm_cosmosdb_sql_database.meeting_db.name
-  partition_key_path  = "/meeting_id"
+  partition_key_paths = ["/meeting_id"]
 
   indexing_policy {
     indexing_mode = "consistent"
