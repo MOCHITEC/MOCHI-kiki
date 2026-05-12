@@ -53,6 +53,12 @@ variable "openai_sku" {
   default     = "S0"
 }
 
+variable "speech_sku" {
+  description = "Azure AI Speech の SKU"
+  type        = string
+  default     = "S0"
+}
+
 variable "gpt4o_capacity" {
   description = "GPT-4o デプロイの TPM 上限（1,000 単位）"
   type        = number

@@ -13,6 +13,7 @@ tf_state_storage_account = "mochikiikitfstate"
 tf_state_container       = "tfstate"
 
 openai_sku         = "S0"
+speech_sku         = "S0"
 gpt4o_capacity     = 30
 embedding_capacity = 30
 

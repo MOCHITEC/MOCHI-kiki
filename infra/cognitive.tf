@@ -68,7 +68,7 @@ resource "azurerm_cognitive_account" "speech" {
   location            = var.location
   resource_group_name = azurerm_resource_group.main.name
   kind                = "SpeechServices"
-  sku_name            = "S0"
+  sku_name            = var.speech_sku
 
   tags = azurerm_resource_group.main.tags
 }
@@ -93,7 +93,7 @@ resource "azurerm_key_vault_secret" "speech_region" {
 
 resource "azurerm_search_service" "main" {
   name                = "${var.prefix}-search-${var.environment}"
-  location            = azurerm_resource_group.main.location
+  location            = var.location
   resource_group_name = azurerm_resource_group.main.name
   sku                 = var.search_sku
 
