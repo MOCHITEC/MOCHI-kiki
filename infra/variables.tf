@@ -90,11 +90,13 @@ variable "bot_image" {
 }
 
 variable "bot_min_replicas" {
+  description = "Bot Container Apps の最小レプリカ数"
   type    = number
   default = 1
 }
 
 variable "bot_max_replicas" {
+  description = "Bot Container Apps の最大レプリカ数"
   type    = number
   default = 3
 }
