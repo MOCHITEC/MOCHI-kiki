@@ -1,0 +1,23 @@
+[
+  {
+    "id": "doc-001",
+    "title": "認証フロー仕様書 v2.3",
+    "content": "本システムの認証は OAuth 2.0 On-Behalf-Of フローを採用する。ユーザーは Entra ID でログイン後、アクセストークンを Bot に渡す。Bot はこのトークンを使って Graph API にアクセスする。トークンの有効期限は 1 時間。リフレッシュトークンは Cosmos DB に暗号化して保存する。",
+    "source": "sharepoint",
+    "category": "auth"
+  },
+  {
+    "id": "doc-002",
+    "title": "API レート制限ポリシー",
+    "content": "Azure OpenAI の呼び出しは 1 分あたり 60 リクエストに制限される。制限を超えた場合は HTTP 429 が返却される。指数バックオフで最大 3 回リトライする。GPT-4o の最大トークン数は 128,000。",
+    "source": "confluence",
+    "category": "api"
+  },
+  {
+    "id": "doc-003",
+    "title": "用語集: SKU（Stock Keeping Unit）",
+    "content": "SKU とは在庫管理単位のこと。本システムでは Azure のサービスプラン識別子（例: S1, P1v3）を指す場合と、社内の製品コード（例: PRD-001）を指す場合がある。文脈によって意味が異なるため注意が必要。",
+    "source": "internal_glossary",
+    "category": "terminology"
+  }
+]
