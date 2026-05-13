@@ -6,6 +6,7 @@ from src.storage.cosmos_client import CosmosClient
 from src.transcript.graph_subscription import GraphTranscriptSubscription
 from src.bot.teams_bot import MeetingBot
 from src.bot.app import create_app_with_adapter
+from src.kernel.orchestrator import Orchestrator
 from src.models import Utterance
 
 logging.basicConfig(level=logging.INFO)
@@ -15,6 +16,7 @@ logger = logging.getLogger(__name__)
 async def main() -> None:
     config = Config()
 
+    # 1. cosmos + graph_sub
     cosmos = CosmosClient(
         endpoint=config.cosmos_endpoint,
         key=config.cosmos_key,
@@ -30,16 +32,43 @@ async def main() -> None:
         notification_url=config.graph_notification_url,
     )
 
-    async def on_utterance(utterance: Utterance) -> None:
-        logger.info(f"[発話受信] {utterance.speaker_name}: {utterance.text}")
-
+    # 2. create bot (orchestrator=None placeholder)
     bot = MeetingBot(
         cosmos_client=cosmos,
         graph_subscription=graph_sub,
-        on_utterance=on_utterance,
+        on_utterance=lambda utterance: asyncio.sleep(0),  # temporary placeholder
     )
 
+    # 3. create app, adapter
     app, adapter = create_app_with_adapter(bot, config.microsoft_app_id, config.microsoft_app_password)
+
+    # 4. create orchestrator (needs adapter)
+    orchestrator = Orchestrator(
+        azure_openai_endpoint=config.azure_openai_endpoint,
+        azure_openai_key=config.azure_openai_key,
+        chat_deployment=config.azure_openai_deployment,
+        embedding_deployment=config.azure_openai_embedding_deployment,
+        search_endpoint=config.azure_search_endpoint,
+        search_key=config.azure_search_key,
+        search_index=config.azure_search_index,
+        adapter=adapter,
+        app_id=config.microsoft_app_id,
+    )
+
+    # 5. set orchestrator.set_cosmos(cosmos)
+    orchestrator.set_cosmos(cosmos)
+
+    # 6. set bot._orchestrator = orchestrator
+    bot._orchestrator = orchestrator
+
+    # 7. define on_utterance closure using orchestrator
+    async def on_utterance(utterance: Utterance) -> None:
+        logger.info(f"[発話受信] {utterance.speaker_name}: {utterance.text}")
+        await orchestrator.process(utterance)
+
+    # 8. set bot._on_utterance = on_utterance
+    bot._on_utterance = on_utterance
+
     runner = web.AppRunner(app)
     await runner.setup()
     site = web.TCPSite(runner, "0.0.0.0", config.port)
