@@ -41,6 +41,7 @@ class Orchestrator:
                 deployment_name=chat_deployment,
                 endpoint=azure_openai_endpoint,
                 api_key=azure_openai_key,
+                api_version="2024-10-21",
             )
         )
 

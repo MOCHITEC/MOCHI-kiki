@@ -53,16 +53,29 @@ class IntentAnalysisPlugin:
         )
 
     async def analyze(self, utterance: str) -> IntentResult:
+        import re
+        import logging
+        logger = logging.getLogger(__name__)
+
         result = await self._kernel.invoke(
             self._function,
             KernelArguments(utterance=utterance),
         )
+        text = str(result).strip()
+        logger.debug(f"[IntentAnalysis] raw response: {text}")
+
+        # strip markdown code fences if present
+        text = re.sub(r"^```(?:json)?\s*", "", text)
+        text = re.sub(r"\s*```$", "", text)
+        text = text.strip()
+
         try:
-            raw = json.loads(str(result))
+            raw = json.loads(text)
             return IntentResult(
                 intent=IntentLabel(raw.get("intent", "normal")),
                 confidence=float(raw.get("confidence", 0.0)),
                 keywords=raw.get("keywords", []),
             )
         except (json.JSONDecodeError, ValueError):
+            logger.warning(f"[IntentAnalysis] JSON parse failed. response was: {text!r}")
             return IntentResult(intent=IntentLabel.NORMAL, confidence=0.0)
