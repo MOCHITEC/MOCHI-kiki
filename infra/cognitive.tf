@@ -23,7 +23,7 @@ resource "azurerm_cognitive_deployment" "gpt4o" {
   }
 
   scale {
-    type     = "Standard"
+    type     = "GlobalStandard"
     capacity = var.gpt4o_capacity
   }
 }

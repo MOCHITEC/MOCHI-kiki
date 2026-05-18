@@ -83,6 +83,43 @@ class Orchestrator:
     def register_speaker(self, speaker_id: str, ref: ConversationReference) -> None:
         self._speaker_references[speaker_id] = ref
 
+    async def process_dry_run(self, utterance: Utterance) -> dict:
+        """C02 パイプラインを dry_run モードで実行。Teams には投稿せず結果を dict で返す。"""
+        result: dict = {
+            "intent": None,
+            "confidence": 0.0,
+            "keywords": [],
+            "search_results": [],
+            "answer": None,
+            "posted_text": None,
+        }
+
+        intent_result = await self._intent.analyze(utterance.text)
+        result["intent"] = intent_result.intent.value
+        result["confidence"] = intent_result.confidence
+        result["keywords"] = intent_result.keywords
+
+        if intent_result.intent == IntentLabel.SPEC_INQUIRY:
+            search_results = self._rag.search(keywords=intent_result.keywords, top_k=3)
+            result["search_results"] = [
+                {"title": r.title, "content": r.content, "score": r.score}
+                for r in search_results
+            ]
+            if search_results:
+                answer = await self._answer.generate(
+                    utterance=utterance.text,
+                    search_results=search_results,
+                )
+                result["answer"] = answer
+                result["posted_text"] = f"**[仕様補完]** {answer}"
+
+        elif intent_result.intent == IntentLabel.AMBIGUOUS:
+            ambiguity = await self._ambiguity.detect(utterance.text)
+            if ambiguity.is_ambiguous:
+                result["ambiguity_question"] = ambiguity.question
+
+        return result
+
     async def process(self, utterance: Utterance) -> None:
         intent_result = await self._intent.analyze(utterance.text)
 
