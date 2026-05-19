@@ -43,16 +43,26 @@ class AmbiguityDetectorPlugin:
         )
 
     async def detect(self, utterance: str) -> AmbiguityResult:
+        import re
+        import logging
+        logger = logging.getLogger(__name__)
+
         result = await self._kernel.invoke(
             self._function,
             KernelArguments(utterance=utterance),
         )
+        text = str(result).strip()
+        text = re.sub(r"^```(?:json)?\s*", "", text)
+        text = re.sub(r"\s*```$", "", text)
+        text = text.strip()
+
         try:
-            raw = json.loads(str(result))
+            raw = json.loads(text)
             return AmbiguityResult(
                 is_ambiguous=bool(raw.get("is_ambiguous", False)),
                 reason=raw.get("reason", ""),
                 question=raw.get("question", ""),
             )
         except (json.JSONDecodeError, ValueError):
+            logger.warning(f"[AmbiguityDetector] JSON parse failed. response was: {text!r}")
             return AmbiguityResult(is_ambiguous=False, reason="", question="")
