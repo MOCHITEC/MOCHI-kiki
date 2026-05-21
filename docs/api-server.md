@@ -1,15 +1,26 @@
 # MOCHI-kiki API サーバー利用マニュアル
 
+## サーバー情報
+
+| 項目 | 値 |
+|---|---|
+| **ベース URL（本番）** | `https://mochikiki-bot-dev--0000001.orangeglacier-d7a5339f.japaneast.azurecontainerapps.io` |
+| **ベース URL（ローカル）** | `http://localhost:3978` |
+| **リージョン** | Japan East |
+| **プラットフォーム** | Azure Container Apps |
+
+---
+
 ## 概要
 
 MOCHI-kiki の API サーバーは既存の Bot Framework サーバー（port 3978）に統合されています。Teams Bot としての動作に加え、外部サービスからの Webhook を受け付けるエンドポイントを提供します。
 
 現在提供しているエンドポイント:
 
-| エンドポイント | 用途 |
-|---|---|
-| `POST /api/recall/transcript` | Recall.ai からの音声文字起こし結果を受信する |
-| `POST /api/messages` | Bot Framework の Teams メッセージを受信する（Bot Framework 内部） |
+| メソッド | パス | 完全 URL（本番） | 用途 |
+|---|---|---|---|
+| `POST` | `/api/recall/transcript` | `https://mochikiki-bot-dev--0000001.orangeglacier-d7a5339f.japaneast.azurecontainerapps.io/api/recall/transcript` | Recall.ai からの音声文字起こし結果を受信する |
+| `POST` | `/api/messages` | `https://mochikiki-bot-dev--0000001.orangeglacier-d7a5339f.japaneast.azurecontainerapps.io/api/messages` | Bot Framework の Teams メッセージを受信する（Bot Framework 内部） |
 
 ---
 
@@ -99,18 +110,15 @@ Recall.ai は安定した speaker ID を提供しないため、`speaker_name` �
 
 ## Recall.ai の設定手順
 
-### 1. Webhook URL の確認
+### 1. Webhook URL
 
-Terraform で本番環境をデプロイ後、以下のコマンドで Webhook URL を取得します。
+```
+https://mochikiki-bot-dev--0000001.orangeglacier-d7a5339f.japaneast.azurecontainerapps.io/api/recall/transcript
+```
 
+最新 URL は常に以下で確認できます:
 ```bash
-cd infra
-terraform output recall_webhook_url
-```
-
-出力例:
-```
-"https://mochikiki-bot-dev.wonderfulbeach-xxxxxxxx.japaneast.azurecontainerapps.io/api/recall/transcript"
+cd infra && terraform output recall_webhook_url
 ```
 
 ### 2. Recall.ai ダッシュボードでの設定
@@ -122,7 +130,7 @@ terraform output recall_webhook_url
 
    | 項目 | 値 |
    |---|---|
-   | URL | `terraform output recall_webhook_url` の値 |
+   | URL | `https://mochikiki-bot-dev--0000001.orangeglacier-d7a5339f.japaneast.azurecontainerapps.io/api/recall/transcript` |
    | Events | `transcript.data` にチェックを入れる |
 
 5. **Save** をクリックする
@@ -163,8 +171,25 @@ INFO:src.main:Bot サーバー起動: port 3978
 
 ### curl でエンドポイントをテストする
 
+**ローカル:**
 ```bash
 curl -X POST http://localhost:3978/api/recall/transcript \
+  -H "Content-Type: application/json" \
+  -d '{
+    "event": "transcript.data",
+    "data": {
+      "bot_id": "bot_test001",
+      "data": {
+        "speaker": "田中 太郎",
+        "words": ["この", "仕様は", "正しいですか"]
+      }
+    }
+  }'
+```
+
+**本番（Azure）:**
+```bash
+curl -X POST https://mochikiki-bot-dev--0000001.orangeglacier-d7a5339f.japaneast.azurecontainerapps.io/api/recall/transcript \
   -H "Content-Type: application/json" \
   -d '{
     "event": "transcript.data",
