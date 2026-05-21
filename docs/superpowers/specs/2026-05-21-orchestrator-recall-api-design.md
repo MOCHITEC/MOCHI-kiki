@@ -27,7 +27,7 @@ RecallWebhookRouter._handle()        ← src/api/recall_router.py
   │  2. extract bot_id → meeting_id
   │  3. extract speaker → speaker_name, join words[*].text → text
   │  4. skip if assembled text is empty → 200 OK
-  │  5. speaker_id = slugify(speaker_name)
+  │  5. speaker_id = speaker_name.replace(" ", "-")
   │  6. Utterance.new(meeting_id, speaker_id, speaker_name, text)
   │  7. cosmos.save_utterance(utterance)   [if cosmos is not None]
   │  8. orchestrator.process(utterance)
@@ -63,7 +63,7 @@ Recall.ai sends `transcript.data` events for finalised transcript chunks. Only t
 | `data.bot_id` | `meeting_id` | Stable per Recall.ai bot session |
 | `data.data.speaker` | `speaker_name` | Display name from meeting |
 | `data.data.words[*].text` joined with `" "` | `text` | Final transcript text |
-| `slugify(speaker_name)` | `speaker_id` | Derived; Recall.ai has no stable speaker ID |
+| `speaker_name.replace(" ", "-")` | `speaker_id` | Derived; Recall.ai has no stable speaker ID. Simple space→hyphen replacement preserves non-ASCII characters (e.g. `"田中 太郎"` → `"田中-太郎"`). |
 
 ---
 
