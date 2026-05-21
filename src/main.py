@@ -8,6 +8,7 @@ from src.bot.teams_bot import MeetingBot
 from src.bot.app import create_app_with_adapter
 from src.kernel.orchestrator import Orchestrator
 from src.models import Utterance
+from src.api.recall_router import RecallWebhookRouter
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -70,7 +71,6 @@ async def main() -> None:
     bot._on_utterance = on_utterance
 
     # 9. mount Recall.ai webhook route
-    from src.api.recall_router import RecallWebhookRouter
     RecallWebhookRouter(orchestrator=orchestrator, cosmos=cosmos).register(app)
 
     runner = web.AppRunner(app)
