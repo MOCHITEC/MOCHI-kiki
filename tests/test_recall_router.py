@@ -110,3 +110,12 @@ async def test_cosmos_save_called_when_provided(router_with_cosmos, orchestrator
     utterance = cosmos.save_utterance.call_args[0][0]
     assert utterance.meeting_id == "bot_abc123"
     assert utterance.speaker_name == "田中 太郎"
+
+
+@pytest.mark.asyncio
+async def test_cosmos_exception_still_calls_orchestrator(router_with_cosmos, orchestrator, cosmos):
+    cosmos.save_utterance.side_effect = RuntimeError("cosmos down")
+    req = make_request(VALID_PAYLOAD)
+    resp = await router_with_cosmos._handle(req)
+    assert resp.status == 202
+    orchestrator.process.assert_called_once()

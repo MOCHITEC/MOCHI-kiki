@@ -42,7 +42,10 @@ class RecallWebhookRouter:
         )
 
         if self._cosmos is not None:
-            await self._cosmos.save_utterance(utterance)
+            try:
+                await self._cosmos.save_utterance(utterance)
+            except Exception:
+                logger.exception("cosmos.save_utterance() failed for utterance %s", utterance.utterance_id)
 
         try:
             await self._orchestrator.process(utterance)
