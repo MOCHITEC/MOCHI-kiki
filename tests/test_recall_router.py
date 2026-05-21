@@ -119,3 +119,18 @@ async def test_cosmos_exception_still_calls_orchestrator(router_with_cosmos, orc
     resp = await router_with_cosmos._handle(req)
     assert resp.status == 202
     orchestrator.process.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_blank_text_after_strip_is_ignored(router, orchestrator):
+    payload = {
+        "event": "transcript.data",
+        "data": {
+            "bot_id": "bot_abc123",
+            "data": {"speaker": "田中 太郎", "words": [{"text": "   "}]},
+        },
+    }
+    req = make_request(payload)
+    resp = await router._handle(req)
+    assert resp.status == 200
+    orchestrator.process.assert_not_called()

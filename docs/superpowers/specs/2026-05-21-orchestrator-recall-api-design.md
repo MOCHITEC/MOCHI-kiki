@@ -81,8 +81,7 @@ Recall.ai sends `transcript.data` events for finalised transcript chunks. Only t
 
 | File | Change |
 |---|---|
-| `src/bot/app.py` | `create_app_with_adapter()` accepts optional `orchestrator` and `cosmos` params; mounts `RecallWebhookRouter` |
-| `src/main.py` | Passes `orchestrator` and `cosmos` into `create_app_with_adapter()` |
+| `src/main.py` | Adds top-level import of `RecallWebhookRouter` and registers the route after orchestrator is fully wired (step 9), before `runner.setup()`. `src/bot/app.py` is unchanged — the route is registered directly in `main.py` because the orchestrator depends on the adapter created inside `create_app_with_adapter()`, so it cannot be passed into that function without restructuring. |
 
 ### `RecallWebhookRouter` interface
 
