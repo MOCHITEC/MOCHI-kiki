@@ -44,3 +44,8 @@ output "managed_identity_client_id" {
   description = "Bot の Managed Identity クライアント ID（Container Apps の認証に使う）"
   value       = azurerm_user_assigned_identity.bot.client_id
 }
+
+output "recall_webhook_url" {
+  description = "Recall.ai の Webhook URL（Recall.ai ダッシュボードの Webhook Endpoint に設定する）"
+  value       = "https://${azurerm_container_app.bot.latest_revision_fqdn}/api/recall/transcript"
+}
