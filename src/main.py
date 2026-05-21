@@ -69,6 +69,10 @@ async def main() -> None:
     # 8. set bot._on_utterance = on_utterance
     bot._on_utterance = on_utterance
 
+    # 9. mount Recall.ai webhook route
+    from src.api.recall_router import RecallWebhookRouter
+    RecallWebhookRouter(orchestrator=orchestrator, cosmos=cosmos).register(app)
+
     runner = web.AppRunner(app)
     await runner.setup()
     site = web.TCPSite(runner, "0.0.0.0", config.port)
