@@ -26,7 +26,7 @@ class RecallWebhookRouter:
         if not words:
             return web.Response(status=200)
 
-        text = " ".join(w.get("text", "") for w in words).strip()
+        text = " ".join(w for w in words if isinstance(w, str)).strip()
         if not text:
             return web.Response(status=200)
 

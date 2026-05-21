@@ -15,10 +15,7 @@ VALID_PAYLOAD = {
         "bot_id": "bot_abc123",
         "data": {
             "speaker": "田中 太郎",
-            "words": [
-                {"text": "この"},
-                {"text": "仕様は"},
-            ],
+            "words": ["この", "仕様は"],
         },
     },
 }
@@ -75,7 +72,7 @@ async def test_empty_words_is_ignored(router, orchestrator):
         "event": "transcript.data",
         "data": {
             "bot_id": "bot_abc123",
-            "data": {"speaker": "田中 太郎", "words": []},
+            "data": {"speaker": "田中 太郎", "words": []},  # empty list
         },
     }
     req = make_request(payload)
@@ -127,7 +124,7 @@ async def test_blank_text_after_strip_is_ignored(router, orchestrator):
         "event": "transcript.data",
         "data": {
             "bot_id": "bot_abc123",
-            "data": {"speaker": "田中 太郎", "words": [{"text": "   "}]},
+            "data": {"speaker": "田中 太郎", "words": ["   "]},
         },
     }
     req = make_request(payload)

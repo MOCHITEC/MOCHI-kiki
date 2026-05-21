@@ -47,10 +47,7 @@ Recall.ai sends `transcript.data` events for finalised transcript chunks. Only t
     "bot_id": "bot_xxx",
     "data": {
       "speaker": "田中 太郎",
-      "words": [
-        {"text": "この", "start_timestamp": {"relative": 0.5}, "end_timestamp": {"relative": 0.8}},
-        {"text": "仕様は", "start_timestamp": {"relative": 0.9}, "end_timestamp": {"relative": 1.3}}
-      ]
+      "words": ["この", "仕様は"]
     }
   }
 }
@@ -62,7 +59,7 @@ Recall.ai sends `transcript.data` events for finalised transcript chunks. Only t
 |---|---|---|
 | `data.bot_id` | `meeting_id` | Stable per Recall.ai bot session |
 | `data.data.speaker` | `speaker_name` | Display name from meeting |
-| `data.data.words[*].text` joined with `" "` | `text` | Final transcript text |
+| `data.data.words[*]` joined with `" "` | `text` | Final transcript text; words is a flat string array |
 | `speaker_name.replace(" ", "-")` | `speaker_id` | Derived; Recall.ai has no stable speaker ID. Simple space→hyphen replacement preserves non-ASCII characters (e.g. `"田中 太郎"` → `"田中-太郎"`). |
 
 ---

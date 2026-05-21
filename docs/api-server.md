@@ -33,8 +33,8 @@ Recall.ai ボットが Teams 会議内で文字起こしたテキストをリア
     "data": {
       "speaker": "田中 太郎",
       "words": [
-        {"text": "この"},
-        {"text": "仕様は"}
+        "この",
+        "仕様は"
       ]
     }
   }
@@ -48,8 +48,7 @@ Recall.ai ボットが Teams 会議内で文字起こしたテキストをリア
 | `event` | string | イベント種別。`transcript.data` のみ処理する。それ以外は無視して `200 OK` を返す |
 | `data.bot_id` | string | Recall.ai のボット ID。`meeting_id` として利用する |
 | `data.data.speaker` | string | 発言者の表示名（日本語可） |
-| `data.data.words` | array | 文字起こし済み単語のリスト |
-| `data.data.words[].text` | string | 各単語のテキスト。スペース区切りで結合して `text` を組み立てる |
+| `data.data.words` | array of string | 文字起こし済み単語のリスト。スペース区切りで結合して `text` を組み立てる |
 
 #### レスポンス
 
@@ -173,11 +172,7 @@ curl -X POST http://localhost:3978/api/recall/transcript \
       "bot_id": "bot_test001",
       "data": {
         "speaker": "田中 太郎",
-        "words": [
-          {"text": "この"},
-          {"text": "仕様は"},
-          {"text": "正しいですか"}
-        ]
+        "words": ["この", "仕様は", "正しいですか"]
       }
     }
   }'
