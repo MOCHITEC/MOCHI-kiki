@@ -1,14 +1,22 @@
 # src/bot/app.py
+from typing import Optional
+
 from aiohttp import web
 from botbuilder.core import BotFrameworkAdapter, BotFrameworkAdapterSettings
 from botbuilder.schema import Activity
 
 from src.bot.teams_bot import MeetingBot
+from src.transcript.recall_source import RecallWebhookHandler
+from src.transcript.recall_ws_handler import RecallWsHandler
 
 
 def create_app_with_adapter(
-    bot: MeetingBot, app_id: str, app_password: str
-) -> tuple:
+    bot: MeetingBot,
+    app_id: str,
+    app_password: str,
+    recall_handler: Optional[RecallWebhookHandler] = None,
+    recall_ws_handler: Optional[RecallWsHandler] = None,
+) -> tuple[web.Application, BotFrameworkAdapter]:
     settings = BotFrameworkAdapterSettings(app_id=app_id, app_password=app_password)
     adapter = BotFrameworkAdapter(settings)
 
@@ -35,4 +43,8 @@ def create_app_with_adapter(
     app = web.Application()
     app.router.add_post("/api/messages", messages)
     app.router.add_post("/api/notifications", notifications)
+    if recall_handler is not None:
+        app.router.add_post("/api/recall/webhook", recall_handler.handle)
+    if recall_ws_handler is not None:
+        app.router.add_get("/api/recall/ws", recall_ws_handler.handle)
     return app, adapter

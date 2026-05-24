@@ -49,5 +49,33 @@ class CosmosClient:
         except Exception:
             return None
 
+    async def find_meeting_id_by_recall_bot_id(self, recall_bot_id: str) -> Optional[str]:
+        """
+        Recall bot.id から meeting_id を逆引きする。
+        WebSocket 経路で bot 投入と接続受信が別レプリカに割り振られた場合の
+        bot↔meeting 解決フォールバック。
+        """
+        if not recall_bot_id:
+            return None
+        query = (
+            "SELECT TOP 1 c.id FROM c WHERE c.recall_bot_id = @bot_id "
+            "AND (NOT IS_DEFINED(c.ended_at) OR c.ended_at = null)"
+        )
+        params = [{"name": "@bot_id", "value": recall_bot_id}]
+        try:
+            iterator = self._meetings.query_items(
+                query=query,
+                parameters=params,
+                enable_cross_partition_query=True,
+            )
+            async for item in iterator:
+                meeting_id = item.get("id")
+                if isinstance(meeting_id, str) and meeting_id:
+                    return meeting_id
+        except Exception:
+            # 例外時は呼び出し側で接続クローズ判断
+            return None
+        return None
+
     async def close(self) -> None:
         await self._azure_client.close()

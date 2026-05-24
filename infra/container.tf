@@ -70,6 +70,9 @@ resource "azurerm_container_app" "bot" {
   ingress {
     external_enabled = true
     target_port      = 3978
+    # WebSocket Upgrade を確実に通すため明示。
+    # http: HTTP/1.1（WS は HTTP/1.1 upgrade で確立される）
+    transport = "http"
 
     traffic_weight {
       percentage      = 100

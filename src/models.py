@@ -47,6 +47,8 @@ class Meeting:
     started_at: datetime
     ended_at: Optional[datetime] = None
     transcript_subscription_id: Optional[str] = None
+    recall_bot_id: Optional[str] = None
+    transcript_source: str = "graph"  # "graph" | "recall" | "both"
 
     def to_dict(self) -> dict:
         return {
@@ -56,4 +58,6 @@ class Meeting:
             "started_at": self.started_at.isoformat(),
             "ended_at": self.ended_at.isoformat() if self.ended_at else None,
             "transcript_subscription_id": self.transcript_subscription_id,
+            "recall_bot_id": self.recall_bot_id,
+            "transcript_source": self.transcript_source,
         }

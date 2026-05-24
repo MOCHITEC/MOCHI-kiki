@@ -46,6 +46,24 @@ output "managed_identity_client_id" {
 }
 
 output "recall_webhook_url" {
-  description = "Recall.ai の Webhook URL（Recall.ai ダッシュボードの Webhook Endpoint に設定する）"
+  description = <<-EOT
+    Recall.ai の Webhook URL（HMAC 署名検証あり）。
+    bot 作成時 recording_config.realtime_endpoints[].url または環境変数
+    RECALL_WEBHOOK_PUBLIC_URL に設定する。WS 経路を併用する場合は
+    本値ではなく recall_ws_url を推奨。
+  EOT
+  value       = "https://${azurerm_container_app.bot.latest_revision_fqdn}/api/recall/webhook"
+}
+
+output "recall_webhook_url_legacy" {
+  description = <<-EOT
+    DEPRECATED. 旧簡易版ルータ /api/recall/transcript の URL（**署名検証なし**）。
+    Phase 6 で削除予定。新規設定で使わないこと。
+  EOT
   value       = "https://${azurerm_container_app.bot.latest_revision_fqdn}/api/recall/transcript"
+}
+
+output "recall_ws_url" {
+  description = "Recall.ai の realtime WebSocket URL（bot 作成時 recording_config.realtime_endpoints[].url または環境変数 RECALL_WS_PUBLIC_URL に設定する）"
+  value       = "wss://${azurerm_container_app.bot.latest_revision_fqdn}/api/recall/ws"
 }
