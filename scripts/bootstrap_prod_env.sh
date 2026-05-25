@@ -27,7 +27,21 @@ fi
 
 run() {
   if [[ "$DRY_RUN" == "1" ]]; then
-    echo "+ $*"
+    # 引数中の秘密値を遮蔽してから echo
+    local masked=()
+    for a in "$@"; do
+      case "$a" in
+        *=secretref:*) masked+=("$a") ;;          # secret ref はそのまま
+        # key=value 形式かつ value が秘密っぽい name のときは伏せる
+        ms-app-id=*|ms-app-password=*|cosmos-key=*|graph-client-secret=*|openai-key=*|search-key=*|recall-api-key=*|recall-webhook-secret=*|recall-ws-public-url=*)
+          masked+=("${a%%=*}=<REDACTED>") ;;
+        # env 名が機密ならマスク
+        MICROSOFT_APP_*=*|AZURE_COSMOS_KEY=*|GRAPH_CLIENT_SECRET=*|AZURE_OPENAI_KEY=*|AZURE_SEARCH_KEY=*|RECALL_API_KEY=*|RECALL_WEBHOOK_SECRET=*)
+          masked+=("${a%%=*}=<REDACTED>") ;;
+        *) masked+=("$a") ;;
+      esac
+    done
+    echo "+ ${masked[*]}"
   else
     "$@"
   fi
