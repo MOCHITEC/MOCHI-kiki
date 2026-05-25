@@ -71,8 +71,9 @@ if [[ -z "${RECALL_WEBHOOK_SECRET:-}" ]]; then
 fi
 RECALL_REGION="${RECALL_REGION:-us-east-1}"
 
-# 初回は webhook のみで起動（WS は deploy_recall_ws.sh で後付け）
-RECALL_TRANSPORT="${RECALL_TRANSPORT:-webhook}"
+# WS 経路をデフォルトの推奨値とする。deploy_recall_ws.sh と整合。
+RECALL_TRANSPORT="${RECALL_TRANSPORT:-websocket}"
+RECALL_WS_PUBLIC_URL="${RECALL_WS_PUBLIC_URL:-wss://${FQDN}/api/recall/ws}"
 RECALL_WEBHOOK_PUBLIC_URL="${RECALL_WEBHOOK_PUBLIC_URL:-https://${FQDN}/api/recall/webhook}"
 TRANSCRIPT_SOURCE="${TRANSCRIPT_SOURCE:-recall}"
 
@@ -80,6 +81,7 @@ echo ""
 echo "── 設定予定 ──"
 echo "  TRANSCRIPT_SOURCE         = $TRANSCRIPT_SOURCE"
 echo "  RECALL_TRANSPORT          = $RECALL_TRANSPORT"
+echo "  RECALL_WS_PUBLIC_URL      = $RECALL_WS_PUBLIC_URL"
 echo "  RECALL_WEBHOOK_PUBLIC_URL = $RECALL_WEBHOOK_PUBLIC_URL"
 echo "  RECALL_REGION             = $RECALL_REGION"
 echo "  GRAPH_NOTIFICATION_URL    = $GRAPH_NOTIFICATION_URL"
@@ -131,11 +133,13 @@ run az containerapp update \
     "RECALL_WEBHOOK_SECRET=secretref:recall-webhook-secret" \
     "RECALL_REGION=${RECALL_REGION}" \
     "RECALL_TRANSPORT=${RECALL_TRANSPORT}" \
-    "RECALL_WEBHOOK_PUBLIC_URL=${RECALL_WEBHOOK_PUBLIC_URL}"
+    "RECALL_WEBHOOK_PUBLIC_URL=${RECALL_WEBHOOK_PUBLIC_URL}" \
+    "RECALL_WS_PUBLIC_URL=${RECALL_WS_PUBLIC_URL}" \
+    "RECALL_AUDIO_SINK=noop"
 
 echo ""
 echo "✅ env / secret 投入完了。次は image を最新コードでビルド & push:"
 echo "   ./scripts/deploy_recall_ws.sh"
 echo ""
-echo "ヒント: bootstrap 直後は transport=webhook で起動。"
-echo "       WS に切り替えたいときは RECALL_TRANSPORT=both で deploy_recall_ws.sh を実行。"
+echo "ヒント: bootstrap デフォルトは RECALL_TRANSPORT=websocket (生音声 + transcript)。"
+echo "       webhook も併用したい移行期は: RECALL_TRANSPORT=both ./scripts/bootstrap_prod_env.sh"
