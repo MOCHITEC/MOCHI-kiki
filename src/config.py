@@ -65,7 +65,7 @@ class Config:
         # Recall bot 投入用
         self.recall_api_key = (os.environ.get("RECALL_API_KEY", "").strip() or None)
 
-        region = os.environ.get("RECALL_REGION", "us-east-1").strip() or "us-east-1"
+        region = os.environ.get("RECALL_REGION", "ap-northeast-1").strip() or "ap-northeast-1"
         if region not in _ALLOWED_RECALL_REGIONS:
             raise RuntimeError(
                 f"RECALL_REGION は {sorted(_ALLOWED_RECALL_REGIONS)} のいずれか (got: {region!r})"

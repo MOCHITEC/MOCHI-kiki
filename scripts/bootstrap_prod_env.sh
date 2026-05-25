@@ -83,7 +83,7 @@ fi
 if [[ -z "${RECALL_WEBHOOK_SECRET:-}" ]]; then
   read -r -p "  RECALL_WEBHOOK_SECRET (whsec_...): " RECALL_WEBHOOK_SECRET
 fi
-RECALL_REGION="${RECALL_REGION:-us-east-1}"
+RECALL_REGION="${RECALL_REGION:-ap-northeast-1}"
 
 # WS 経路をデフォルトの推奨値とする。deploy_recall_ws.sh と整合。
 RECALL_TRANSPORT="${RECALL_TRANSPORT:-websocket}"

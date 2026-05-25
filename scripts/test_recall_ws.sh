@@ -47,7 +47,7 @@ set +a
 : "${AZURE_COSMOS_ENDPOINT:?.env に AZURE_COSMOS_ENDPOINT が必要}"
 : "${AZURE_COSMOS_KEY:?.env に AZURE_COSMOS_KEY が必要}"
 COSMOS_DATABASE="${COSMOS_DATABASE:-meeting_db}"
-RECALL_REGION="${RECALL_REGION:-us-east-1}"
+RECALL_REGION="${RECALL_REGION:-ap-northeast-1}"
 
 RG_NAME="${RG_NAME:-rg-mochi-kiki}"
 APP_NAME="${APP_NAME:-mochikiki-bot-dev}"

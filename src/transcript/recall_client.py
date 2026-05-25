@@ -36,7 +36,7 @@ class RecallBotClient:
         self,
         api_key: str,
         webhook_url: Optional[str] = None,
-        region: str = "us-east-1",
+        region: str = "ap-northeast-1",
         bot_name: str = "MOCHI-kiki",
         language_code: str = "ja",
         timeout_seconds: float = _DEFAULT_TIMEOUT,
