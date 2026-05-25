@@ -67,6 +67,17 @@ resource "azurerm_container_app" "bot" {
     }
   }
 
+  # env / secret / image は az containerapp で out-of-band 管理しているので
+  # terraform は中身を所有しない。下記を ignore しないと "az containerapp update
+  # --set-env-vars" した内容を terraform apply が消してしまう。
+  lifecycle {
+    ignore_changes = [
+      template[0].container[0].env,
+      template[0].container[0].image,
+      secret,
+    ]
+  }
+
   ingress {
     external_enabled = true
     target_port      = 3978
