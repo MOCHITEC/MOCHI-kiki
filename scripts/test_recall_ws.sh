@@ -47,6 +47,7 @@ set +a
 : "${AZURE_COSMOS_ENDPOINT:?.env に AZURE_COSMOS_ENDPOINT が必要}"
 : "${AZURE_COSMOS_KEY:?.env に AZURE_COSMOS_KEY が必要}"
 COSMOS_DATABASE="${COSMOS_DATABASE:-meeting_db}"
+RECALL_REGION="${RECALL_REGION:-us-east-1}"
 
 RG_NAME="${RG_NAME:-rg-mochi-kiki}"
 APP_NAME="${APP_NAME:-mochikiki-bot-dev}"
@@ -59,11 +60,14 @@ FQDN="$(az containerapp show -n "$APP_NAME" -g "$RG_NAME" \
   --query properties.latestRevisionFqdn -o tsv)"
 WS_URL="wss://${FQDN}/api/recall/ws"
 
+RECALL_BASE="https://${RECALL_REGION}.recall.ai"
+
 echo "════════════════════════════════════════════════════════"
 echo "Recall.ai WS E2E テスト"
 echo "════════════════════════════════════════════════════════"
 echo "  Meeting URL  : $MEETING_URL"
 echo "  WS endpoint  : $WS_URL"
+echo "  Recall region: $RECALL_REGION  ($RECALL_BASE)"
 echo "  Cosmos DB    : $COSMOS_DATABASE"
 echo "════════════════════════════════════════════════════════"
 echo ""
@@ -73,7 +77,7 @@ read -r -p "Recall.ai bot を投入します。よければ Enter / 中止は Ct
 # ── 1) Recall.ai bot を投入 ──────────────────────────────────
 echo "::: 1. Recall bot を投入中..."
 
-RESP="$(curl -sS -X POST https://us-east-1.recall.ai/api/v1/bot \
+RESP="$(curl -sS -X POST "$RECALL_BASE/api/v1/bot" \
   -H "Authorization: Token $RECALL_API_KEY" \
   -H "Content-Type: application/json" \
   -d @- <<JSON
@@ -160,7 +164,7 @@ echo "    （会議で発話すると以下が流れる）"
 echo "    [発話受信] ..."
 echo ""
 echo "▼ テスト終了時は bot を退出させてください:"
-echo "    curl -X POST https://us-east-1.recall.ai/api/v1/bot/$BOT_ID/leave_call/ \\"
+echo "    curl -X POST $RECALL_BASE/api/v1/bot/$BOT_ID/leave_call/ \\"
 echo "      -H 'Authorization: Token \$RECALL_API_KEY'"
 echo ""
 echo "保存しておくと便利な値:"
