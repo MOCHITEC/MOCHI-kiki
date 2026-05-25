@@ -163,6 +163,8 @@ fi
 # ── 1. terraform apply ──────────────────────────────────────
 if [[ "$SKIP_TF" != "1" ]]; then
   echo "::: 1. terraform apply (ingress.transport=http と recall_ws_url 反映)"
+  # tfvars が無くても動くように subscription_id を az session から渡す
+  export TF_VAR_subscription_id="${TF_VAR_subscription_id:-$(az account show --query id -o tsv)}"
   pushd infra >/dev/null
   run terraform init -upgrade \
     -backend-config="resource_group_name=${TF_BACKEND_RG}" \
