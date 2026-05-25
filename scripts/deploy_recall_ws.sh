@@ -20,7 +20,6 @@
 #   ACR_NAME          ACR 名 (default: mochikikiacrdev)
 #   IMAGE_TAG         タグ (default: ws-$(date +%Y%m%d-%H%M%S))
 #   RECALL_TRANSPORT  webhook | websocket | both (default: both)
-#   RECALL_WS_EVENTS  カンマ区切り (default: audio_mixed_raw.data,transcript.data)
 #   RECALL_AUDIO_SINK noop | file | azure_speech (default: noop)
 #   SKIP_TF           1 で terraform apply をスキップ
 #   SKIP_BUILD        1 でビルド & push をスキップ
@@ -36,7 +35,6 @@ ACR_NAME="${ACR_NAME:-mochikikiacrdev}"
 IMAGE_NAME="mochi-kiki-bot"
 IMAGE_TAG="${IMAGE_TAG:-ws-$(date +%Y%m%d-%H%M%S)}"
 RECALL_TRANSPORT="${RECALL_TRANSPORT:-both}"
-RECALL_WS_EVENTS="${RECALL_WS_EVENTS:-audio_mixed_raw.data,transcript.data}"
 RECALL_AUDIO_SINK="${RECALL_AUDIO_SINK:-noop}"
 SKIP_TF="${SKIP_TF:-0}"
 SKIP_BUILD="${SKIP_BUILD:-0}"
@@ -208,11 +206,7 @@ if [[ "$SKIP_DEPLOY" != "1" ]]; then
     --set-env-vars \
       "RECALL_TRANSPORT=$RECALL_TRANSPORT" \
       "RECALL_WS_PUBLIC_URL=secretref:recall-ws-public-url" \
-      "RECALL_WS_EVENTS=$RECALL_WS_EVENTS" \
-      "RECALL_WS_MAX_FRAME_BYTES=1048576" \
-      "RECALL_WS_QUEUE_MAX_BYTES=1048576" \
-      "RECALL_AUDIO_SINK=$RECALL_AUDIO_SINK" \
-      "RECALL_WEBHOOK_DRY_RUN=false"
+      "RECALL_AUDIO_SINK=$RECALL_AUDIO_SINK"
 
   # ── 4. イメージを新リビジョンに反映 ─────────────────────
   echo "::: 4. Container App image を新タグへ更新"

@@ -19,6 +19,11 @@ from src.api.recall_router import RecallWebhookRouter
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# 固定値: env 化する理由が無いもの
+_RECALL_BOT_NAME = "MOCHI-kiki"
+_RECALL_TRANSCRIPT_LANGUAGE = "ja"
+_RECALL_WS_EVENTS = ("audio_mixed_raw.data", "transcript.data")
+
 
 async def main() -> None:
     config = Config()
@@ -47,7 +52,6 @@ async def main() -> None:
         cosmos_client=cosmos,
         on_utterance=_placeholder_on_utterance,
         webhook_secret=config.recall_webhook_secret,
-        insecure_mode=config.recall_webhook_insecure,
     )
 
     # 2.b Recall WS handler (transport が websocket/both のとき有効)
@@ -60,12 +64,10 @@ async def main() -> None:
             audio_sink=audio_sink,
             webhook_secret=config.recall_webhook_secret,
             webhook_handler=recall_handler,
-            insecure_mode=config.recall_webhook_insecure,
-            max_frame_bytes=config.recall_ws_max_frame_bytes,
         )
         logger.info(
             "RecallWsHandler 起動 (audio_sink=%s, events=%s)",
-            config.recall_audio_sink, config.recall_ws_events,
+            config.recall_audio_sink, _RECALL_WS_EVENTS,
         )
 
     # 3. Recall bot client (transcript_source が recall/both のときのみ)
@@ -75,11 +77,11 @@ async def main() -> None:
             api_key=config.recall_api_key,
             webhook_url=config.recall_webhook_public_url,
             region=config.recall_region,
-            bot_name=config.recall_bot_name,
-            language_code=config.recall_transcript_language,
+            bot_name=_RECALL_BOT_NAME,
+            language_code=_RECALL_TRANSCRIPT_LANGUAGE,
             transport=config.recall_transport,
             ws_url=config.recall_ws_public_url,
-            ws_events=config.recall_ws_events,
+            ws_events=_RECALL_WS_EVENTS,
         )
         logger.info(
             "RecallBotClient 起動 (region=%s, source=%s, transport=%s)",
@@ -129,19 +131,9 @@ async def main() -> None:
         logger.info(f"[発話受信] {utterance.speaker_name}: {utterance.text}")
         await orchestrator.process(utterance)
 
-    # 8.b webhook dry-run モード (移行 Phase 5 で WS が主役のとき、二重処理回避用)
-    async def _webhook_dry_run(utterance: Utterance) -> None:
-        logger.info(
-            "[webhook dry-run] meeting=%s speaker=%s text=%s",
-            utterance.meeting_id, utterance.speaker_name, utterance.text,
-        )
-
     # 9. inject on_utterance into bot & handlers
     bot._on_utterance = on_utterance
-    if config.recall_webhook_dry_run:
-        recall_handler.set_on_utterance(_webhook_dry_run)
-    else:
-        recall_handler.set_on_utterance(on_utterance)
+    recall_handler.set_on_utterance(on_utterance)
     if recall_ws_handler is not None:
         recall_ws_handler.set_on_utterance(on_utterance)
 

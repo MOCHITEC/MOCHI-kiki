@@ -46,7 +46,7 @@ Recall.ai が会議に投入した bot から **realtime WebSocket** で接続�
 - Upgrade の body は空のため、署名対象は `"{id}.{ts}."` のみ。
 - 検証 NG なら **401**、リプレイ (5 分超過 / 重複 `id`) も 401。
 
-#### 購読イベント (Config `RECALL_WS_EVENTS`)
+#### 購読イベント（`src/main.py` でハードコード）
 | event | 用途 |
 |---|---|
 | `audio_mixed_raw.data` | 全参加者ミックス PCM (16 kHz / mono / S16LE)、base64 で来る |
@@ -99,12 +99,12 @@ Recall.ai が会議に投入した bot から **realtime WebSocket** で接続�
 - 接続失敗時 **最大 30 回 / 固定 3 秒間隔** で再試行
 - 30 回失敗で endpoint が `failed` 状態になる
 
-#### バックプレッシャ / 上限
-| 項目 | デフォルト | env |
-|---|---|---|
-| 単一フレーム最大バイト | 1 MiB | `RECALL_WS_MAX_FRAME_BYTES` |
-| 接続内ペンディングキュー上限 | 1 MiB | `RECALL_WS_QUEUE_MAX_BYTES` |
-| heartbeat (ping) 間隔 | 30 s | （ハンドラ固定）|
+#### バックプレッシャ / 上限（すべて `src/transcript/recall_ws_handler.py` のモジュール定数）
+| 項目 | デフォルト |
+|---|---|
+| 単一フレーム最大バイト | 1 MiB (`_MAX_FRAME_BYTES`) |
+| 接続あたりペンディングフレーム上限 | 64 件 (`_PENDING_FRAME_LIMIT`) |
+| heartbeat (ping) 間隔 | 30 s (`_DEFAULT_HEARTBEAT_SECONDS`) |
 
 #### 内部処理フロー
 ```
@@ -226,7 +226,6 @@ Recall.ai は安定した speaker ID を提供しないため、`speaker_name` �
    |---|---|
    | `RECALL_TRANSPORT` | `websocket` または `both` |
    | `RECALL_WS_PUBLIC_URL` | `wss://<your fqdn>/api/recall/ws` (`terraform output recall_ws_url` で取得) |
-   | `RECALL_WS_EVENTS` | `audio_mixed_raw.data,transcript.data` |
    | `RECALL_AUDIO_SINK` | `noop` / `file` / (将来) `azure_speech` |
    | `RECALL_WEBHOOK_SECRET` | Recall ダッシュボード → API Keys で発行 |
 
@@ -422,5 +421,5 @@ ContainerAppConsoleLogs
 | ログに `cosmos.save_utterance() failed` が出る | Cosmos DB への書き込み失敗 | Orchestrator の処理は継続するが、発話ログが欠落する。接続情報を確認する |
 | WS `Upgrade` が 401 になる | secret 不一致 / clock skew | `RECALL_WEBHOOK_SECRET` を確認、サーバ時刻が 5 分以内に揃っているか確認 |
 | WS 接続直後に 1008 で切断 | `bot.id` から `meeting_id` 解決失敗 | `meetings` コンテナに対象 `recall_bot_id` を持つ doc があるか確認。マルチレプリカで bot 投入と WS 受信が別 pod に行った場合に発生 |
-| `audio_mixed_raw.data` が来ない | `recording_config.audio_mixed_raw = {}` の付け忘れ | `RECALL_WS_EVENTS` に `audio_mixed_raw.data` を入れて再デプロイ (`RecallBotClient` が自動付与する) |
+| `audio_mixed_raw.data` が来ない | `recording_config.audio_mixed_raw = {}` の付け忘れ | `src/main.py` の `_RECALL_WS_EVENTS` 定数に `audio_mixed_raw.data` が含まれているか確認（含まれていれば `RecallBotClient` が `recording_config.audio_mixed_raw={}` を自動付与する）|
 | Recall 側で endpoint が `failed` 状態 | 30 回 / 90 秒の連続接続失敗 | Container Apps の ingress / 証明書 / WS サポートを確認 |

@@ -42,8 +42,9 @@ _AUDIO_SAMPLE_RATE = 16_000
 
 # bot_id 解決を待つ間に貯めるフレーム数の上限（最初の数フレームで bot.id が分かる前提）
 _PENDING_FRAME_LIMIT = 64
-# テキストフレーム長の安全上限。Config で上書き可能
-_DEFAULT_MAX_FRAME_BYTES = 1 * 1024 * 1024
+# テキストフレーム長の安全上限。
+# 16 kHz mono S16LE で約 30 秒分。Recall の典型送信は 100-200 ms 毎なので十分な余裕。
+_MAX_FRAME_BYTES = 1 * 1024 * 1024
 
 
 class RecallWsSecretError(ValueError):
@@ -68,8 +69,6 @@ class RecallWsHandler:
         webhook_secret: Optional[str] = None,
         webhook_handler: Optional["RecallWebhookHandler"] = None,
         clock: Callable[[], float] = time.time,
-        insecure_mode: bool = False,
-        max_frame_bytes: int = _DEFAULT_MAX_FRAME_BYTES,
         heartbeat_seconds: float = _DEFAULT_HEARTBEAT_SECONDS,
     ) -> None:
         self._cosmos = cosmos_client
@@ -77,14 +76,13 @@ class RecallWsHandler:
         self._audio_sink: AudioSink = audio_sink or NoopAudioSink()
         self._webhook_handler = webhook_handler
         self._clock = clock
-        self._insecure_mode = insecure_mode
-        self._max_frame_bytes = max_frame_bytes
+        self._max_frame_bytes = _MAX_FRAME_BYTES
         self._heartbeat = heartbeat_seconds
 
         self._secret_bytes: Optional[bytes] = None
         if webhook_secret:
             self._secret_bytes = self._decode_secret(webhook_secret)
-        elif not insecure_mode:
+        else:
             logger.warning(
                 "RecallWsHandler: secret 未設定。Upgrade を全て 401 で拒否します。"
             )
@@ -320,9 +318,6 @@ class RecallWsHandler:
     # ------------------------------------------------------------------
 
     def _verify_upgrade(self, headers: Mapping[str, str]) -> bool:
-        if self._insecure_mode:
-            logger.warning("RecallWsHandler: insecure_mode で署名検証をバイパス")
-            return True
         if self._secret_bytes is None:
             return False
 

@@ -55,18 +55,16 @@ class RecallWebhookHandler:
         on_utterance: Callable[[Utterance], Awaitable[None]],
         webhook_secret: Optional[str] = None,
         clock: Callable[[], float] = time.time,
-        insecure_mode: bool = False,
     ) -> None:
         self._cosmos = cosmos_client
         self._on_utterance = on_utterance
         self._clock = clock
-        self._insecure_mode = insecure_mode
 
         # secret は起動時にデコードし、形式不正なら fail-fast
         self._secret_bytes: Optional[bytes] = None
         if webhook_secret:
             self._secret_bytes = self._decode_secret(webhook_secret)
-        elif not insecure_mode:
+        else:
             logger.warning(
                 "RecallWebhookHandler: secret 未設定。全リクエストを 401 で拒否します。"
             )
@@ -191,9 +189,6 @@ class RecallWebhookHandler:
         logger.info("RecallWebhookHandler: bot status changed (status=%s)", status)
 
     def _verify_request(self, headers: Mapping[str, str], raw_body: bytes) -> bool:
-        if self._insecure_mode:
-            logger.warning("RecallWebhookHandler: insecure_mode で署名検証をバイパス")
-            return True
         if self._secret_bytes is None:
             return False
 

@@ -17,10 +17,10 @@
 - `RECALL_API_KEY` （ダッシュボードの API key）
 - `RECALL_WEBHOOK_SECRET` （Workspace signing secret）
 - `RECALL_REGION` （例: `us-east-1`）
-- `RECALL_BOT_NAME` （任意。デフォルト `MOCHI-kiki`）
-- `RECALL_TRANSCRIPT_LANGUAGE` （任意。デフォルト `ja`）
 - `RECALL_WEBHOOK_PUBLIC_URL` （webhook も併用するなら）
 - `TRANSCRIPT_SOURCE` （`recall` か `both` でないと bot が投入されない）
+
+> bot 表示名 / transcript 言語 / WS 購読イベント / WS フレーム上限などは `src/main.py` の定数でハードコード（env 化していない）。変更したい場合はコード側を編集する。
 
 ---
 
@@ -99,11 +99,7 @@ az containerapp update \
   --set-env-vars \
     "RECALL_TRANSPORT=both" \
     "RECALL_WS_PUBLIC_URL=secretref:recall-ws-public-url" \
-    "RECALL_WS_EVENTS=audio_mixed_raw.data,transcript.data" \
-    "RECALL_WS_MAX_FRAME_BYTES=1048576" \
-    "RECALL_WS_QUEUE_MAX_BYTES=1048576" \
-    "RECALL_AUDIO_SINK=noop" \
-    "RECALL_WEBHOOK_DRY_RUN=false"
+    "RECALL_AUDIO_SINK=noop"
 ```
 
 ### 2-4. イメージを新リビジョンに反映
@@ -140,8 +136,8 @@ WS endpoint は **bot 作成時** に `recording_config.realtime_endpoints[]` �
 Recall.ai ダッシュボード → **API Keys** → **Verification secret** が prod の `RECALL_WEBHOOK_SECRET` と一致していること。
 
 ### 3-3. 既存 webhook 登録の扱い
-- `RECALL_TRANSPORT=both` 期間中は、既存の Recall webhook 登録もそのまま残してよい（二重受信になるが、`RECALL_WEBHOOK_DRY_RUN=false` のままだと utterance が二重保存されるので注意）
-- 二重保存を避けたい場合は `RECALL_WEBHOOK_DRY_RUN=true` を **追加で** set
+- `RECALL_TRANSPORT=both` 期間中、同じ `transcript.data` を webhook と WS の両方で受ける → **utterance が二重保存される可能性**あり。
+  並走テストは短期間（1-2 日）に留め、検証完了後すぐ `websocket` 単独に切り替えること。
 - `RECALL_TRANSPORT=websocket` に切替後は、Recall.ai ダッシュボードの webhook 登録は外す or 残しても無害（送信先がもう Webhook を返さなくなるだけ）
 
 ---
@@ -205,4 +201,4 @@ az containerapp update \
 | WS established 後すぐ 1008 close | `data.bot.id` から `meeting_id` 解決失敗 | Cosmos `meetings` に対象 `recall_bot_id` doc があるか確認 |
 | WS が確立すらされない | Recall が 30 回 3 秒で再試行して `failed` | ingress.transport が `http` か / 証明書有効か / `RECALL_WS_PUBLIC_URL` 値が正しいか |
 | 認証で 401 が続く | secret / clock skew | `RECALL_WEBHOOK_SECRET` が両側で一致、Container Apps 側時刻 OK |
-| `audio_mixed_raw.data` が来ない | `recording_config.audio_mixed_raw` 抜け | `RECALL_WS_EVENTS` に `audio_mixed_raw.data` を含めて再デプロイ（`RecallBotClient` 側で自動付与される）|
+| `audio_mixed_raw.data` が来ない | `recording_config.audio_mixed_raw` 抜け | `src/main.py` の `_RECALL_WS_EVENTS` に `audio_mixed_raw.data` が含まれていれば `RecallBotClient` が `recording_config.audio_mixed_raw={}` を自動付与する |

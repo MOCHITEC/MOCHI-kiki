@@ -317,30 +317,19 @@ async def test_missing_secret_fails_closed(cosmos, on_utterance):
 
 
 @pytest.mark.asyncio
-async def test_insecure_mode_bypasses_signature(cosmos, on_utterance):
+async def test_missing_secret_rejects_all_requests(cosmos, on_utterance):
+    """secret 未設定の場合は insecure_mode 脱出弁がないので全て 401。"""
     handler = RecallWebhookHandler(
         cosmos_client=cosmos,
         on_utterance=on_utterance,
         webhook_secret=None,
         clock=lambda: _FIXED_NOW,
-        insecure_mode=True,
     )
     handler.register_bot("bot-001", "meet-001")
-    payload = {
-        "event": "transcript.data",
-        "data": {
-            "bot": {"id": "bot-001"},
-            "data": {
-                "is_final": True,
-                "words": [{"text": "hi"}],
-                "participant": {"id": 1, "name": "X"},
-            },
-        },
-    }
-    body = json.dumps(payload).encode("utf-8")
+    body = b'{"event":"transcript.data"}'
     res = await handler.handle(_make_request({}, body))
-    assert res.status == 200
-    on_utterance.assert_awaited_once()
+    assert res.status == 401
+    on_utterance.assert_not_awaited()
 
 
 @pytest.mark.asyncio
