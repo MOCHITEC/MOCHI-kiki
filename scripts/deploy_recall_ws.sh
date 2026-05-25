@@ -41,6 +41,12 @@ SKIP_BUILD="${SKIP_BUILD:-0}"
 SKIP_DEPLOY="${SKIP_DEPLOY:-0}"
 DRY_RUN="${DRY_RUN:-0}"
 
+# terraform backend (azurerm)。infra/backend.tf がパラメタを env から受ける構成のため明示的に渡す。
+TF_BACKEND_RG="${TF_BACKEND_RG:-rg-tfstate}"
+TF_BACKEND_SA="${TF_BACKEND_SA:-mochikiikitfstate}"
+TF_BACKEND_CONTAINER="${TF_BACKEND_CONTAINER:-tfstate}"
+TF_BACKEND_KEY="${TF_BACKEND_KEY:-mochi-kiki.tfstate}"
+
 run() {
   if [[ "$DRY_RUN" == "1" ]]; then
     echo "+ $*"
@@ -158,7 +164,11 @@ fi
 if [[ "$SKIP_TF" != "1" ]]; then
   echo "::: 1. terraform apply (ingress.transport=http と recall_ws_url 反映)"
   pushd infra >/dev/null
-  run terraform init -upgrade
+  run terraform init -upgrade \
+    -backend-config="resource_group_name=${TF_BACKEND_RG}" \
+    -backend-config="storage_account_name=${TF_BACKEND_SA}" \
+    -backend-config="container_name=${TF_BACKEND_CONTAINER}" \
+    -backend-config="key=${TF_BACKEND_KEY}"
   run terraform plan -out=ws.tfplan
   echo ">>> 上記 plan を確認してください。続行する場合は Enter、中止は Ctrl-C"
   if [[ "$DRY_RUN" != "1" ]]; then read -r _; fi
