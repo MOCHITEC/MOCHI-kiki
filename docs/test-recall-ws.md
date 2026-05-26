@@ -80,7 +80,7 @@ cd /Users/uedaryou/mochitec/repositories/MOCHI-kiki
 RECALL_KEY=$(grep '^RECALL_API_KEY=' .env | cut -d= -f2-)
 RECALL_REGION=$(grep '^RECALL_REGION=' .env | cut -d= -f2-)
 FQDN=$(az containerapp show -n mochikiki-bot-dev -g rg-mochi-kiki \
-        --query properties.latestRevisionFqdn -o tsv)
+        --query properties.configuration.ingress.fqdn -o tsv)
 WS_URL="wss://${FQDN}/api/recall/ws"
 MEETING_URL="https://teams.live.com/meet/..."
 

@@ -121,7 +121,7 @@ hr
 echo " [5/5] WS endpoint への直接到達性 (期待 status=401)"
 hr
 FQDN="$(az containerapp show -n "$APP_NAME" -g "$RG_NAME" \
-  --query properties.latestRevisionFqdn -o tsv 2>/dev/null || echo "")"
+  --query properties.configuration.ingress.fqdn -o tsv 2>/dev/null || echo "")"
 if [[ -n "$FQDN" ]]; then
   HTTPS_URL="https://${FQDN}/api/recall/ws"
   STATUS="$(curl -s -o /dev/null -w '%{http_code}' \

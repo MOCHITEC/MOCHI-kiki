@@ -17,7 +17,7 @@ output "acr_login_server" {
 
 output "container_app_url" {
   description = "Bot の外部 URL（Bot Framework の Messaging Endpoint に設定する）"
-  value       = "https://${azurerm_container_app.bot.latest_revision_fqdn}"
+  value       = "https://${azurerm_container_app.bot.ingress[0].fqdn}"
 }
 
 output "openai_endpoint" {
@@ -52,7 +52,7 @@ output "recall_webhook_url" {
     RECALL_WEBHOOK_PUBLIC_URL に設定する。WS 経路を併用する場合は
     本値ではなく recall_ws_url を推奨。
   EOT
-  value       = "https://${azurerm_container_app.bot.latest_revision_fqdn}/api/recall/webhook"
+  value       = "https://${azurerm_container_app.bot.ingress[0].fqdn}/api/recall/webhook"
 }
 
 output "recall_webhook_url_legacy" {
@@ -60,10 +60,10 @@ output "recall_webhook_url_legacy" {
     DEPRECATED. 旧簡易版ルータ /api/recall/transcript の URL（**署名検証なし**）。
     Phase 6 で削除予定。新規設定で使わないこと。
   EOT
-  value       = "https://${azurerm_container_app.bot.latest_revision_fqdn}/api/recall/transcript"
+  value       = "https://${azurerm_container_app.bot.ingress[0].fqdn}/api/recall/transcript"
 }
 
 output "recall_ws_url" {
   description = "Recall.ai の realtime WebSocket URL（bot 作成時 recording_config.realtime_endpoints[].url または環境変数 RECALL_WS_PUBLIC_URL に設定する）"
-  value       = "wss://${azurerm_container_app.bot.latest_revision_fqdn}/api/recall/ws"
+  value       = "wss://${azurerm_container_app.bot.ingress[0].fqdn}/api/recall/ws"
 }

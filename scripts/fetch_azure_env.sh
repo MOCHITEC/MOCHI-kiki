@@ -52,7 +52,7 @@ OPENAI_KEY="$(az cognitiveservices account keys list -n "$OPENAI_NAME" -g "$RG_N
 SEARCH_ENDPOINT="https://${SEARCH_NAME}.search.windows.net"
 SEARCH_KEY="$(az search admin-key show --service-name "$SEARCH_NAME" -g "$RG_NAME" --query primaryKey -o tsv)"
 
-FQDN="$(az containerapp show -n "$APP_NAME" -g "$RG_NAME" --query properties.latestRevisionFqdn -o tsv)"
+FQDN="$(az containerapp show -n "$APP_NAME" -g "$RG_NAME" --query properties.configuration.ingress.fqdn -o tsv)"
 TENANT_ID="$(az account show --query tenantId -o tsv)"
 
 err "完了。 stdout に出力します。"

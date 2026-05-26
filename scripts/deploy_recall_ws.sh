@@ -183,7 +183,7 @@ fi
 # WS URL は output から取れなければ env で渡してもらう
 WS_URL="${WS_URL:-${RECALL_WS_PUBLIC_URL:-}}"
 if [[ -z "$WS_URL" ]]; then
-  WS_URL="wss://$(az containerapp show --name "$APP_NAME" --resource-group "$RG_NAME" --query properties.latestRevisionFqdn -o tsv)/api/recall/ws"
+  WS_URL="wss://$(az containerapp show --name "$APP_NAME" --resource-group "$RG_NAME" --query properties.configuration.ingress.fqdn -o tsv)/api/recall/ws"
 fi
 echo "RECALL_WS_PUBLIC_URL=$WS_URL"
 
@@ -230,7 +230,7 @@ fi
 
 # ── 5. Smoke test ────────────────────────────────────────────
 echo "::: 5. smoke test (WS 配線確認)"
-FQDN="$(az containerapp show --name "$APP_NAME" --resource-group "$RG_NAME" --query properties.latestRevisionFqdn -o tsv)"
+FQDN="$(az containerapp show --name "$APP_NAME" --resource-group "$RG_NAME" --query properties.configuration.ingress.fqdn -o tsv)"
 HTTPS_URL="https://${FQDN}/api/recall/ws"
 
 # 認証ヘッダ無しで Upgrade を試みると 401 が返ること（= ルートが配線されている証拠）

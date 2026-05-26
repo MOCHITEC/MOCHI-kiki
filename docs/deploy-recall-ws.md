@@ -113,7 +113,7 @@ az containerapp update \
 ### 2-5. Smoke test
 
 ```bash
-FQDN=$(az containerapp show -n "$APP" -g "$RG" --query properties.latestRevisionFqdn -o tsv)
+FQDN=$(az containerapp show -n "$APP" -g "$RG" --query properties.configuration.ingress.fqdn -o tsv)
 
 curl -i \
   -H "Connection: Upgrade" \

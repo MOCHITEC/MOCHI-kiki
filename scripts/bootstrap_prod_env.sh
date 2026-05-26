@@ -71,7 +71,7 @@ fi
 
 # Container App の現 FQDN を取得（GRAPH_NOTIFICATION_URL の整合確認用）
 FQDN="$(az containerapp show -n "$APP_NAME" -g "$RG_NAME" \
-        --query properties.latestRevisionFqdn -o tsv)"
+        --query properties.configuration.ingress.fqdn -o tsv)"
 echo "Current FQDN: $FQDN"
 echo ""
 

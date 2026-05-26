@@ -57,7 +57,7 @@ command -v python3 >/dev/null || { echo "python3 が必要"; exit 1; }
 command -v jq >/dev/null      || { echo "jq が必要 (brew install jq)"; exit 1; }
 
 FQDN="$(az containerapp show -n "$APP_NAME" -g "$RG_NAME" \
-  --query properties.latestRevisionFqdn -o tsv)"
+  --query properties.configuration.ingress.fqdn -o tsv)"
 WS_URL="wss://${FQDN}/api/recall/ws"
 
 RECALL_BASE="https://${RECALL_REGION}.recall.ai"
