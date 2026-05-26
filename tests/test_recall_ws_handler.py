@@ -215,10 +215,12 @@ async def test_upgrade_accepts_svix_prefixed_headers(handler) -> None:
 # Tests: bot_id resolution
 # ----------------------------------------------------------------------
 
-async def test_unknown_bot_closes_with_policy_violation(handler, cosmos) -> None:
+async def test_unknown_bot_falls_back_to_bot_id_as_meeting_id(handler, cosmos, sink) -> None:
+    """mapping 未登録の bot からの接続でも切らず、bot_id を meeting_id として処理する。"""
     cosmos.find_meeting_id_by_recall_bot_id = AsyncMock(return_value=None)
     client, server = await _make_client(handler)
     ts = int(_FIXED_NOW)
+    pcm = b"\xaa\xbb" * 100
     try:
         ws = await client.ws_connect(
             "/api/recall/ws",
@@ -228,14 +230,18 @@ async def test_unknown_bot_closes_with_policy_violation(handler, cosmos) -> None
                 "webhook-signature": _sign_upgrade("msg-1", ts),
             },
         )
-        await ws.send_json(_audio_envelope("bot-unknown", b"\x00\x01\x02\x03"))
-        # クローズフレームを待つ
-        close_msg = await ws.receive(timeout=2.0)
-        assert close_msg.type in (WSMsgType.CLOSE, WSMsgType.CLOSED)
-        assert ws.close_code == WSCloseCode.POLICY_VIOLATION
+        await ws.send_json(_audio_envelope("bot-unknown", pcm))
+        for _ in range(20):
+            if sink.pushes:
+                break
+            await asyncio.sleep(0.05)
+        await ws.close()
     finally:
         await client.close()
         await server.close()
+    # 切断されずに音声が AudioSink に push されていること
+    assert sink.opened == [("bot-unknown", "bot-unknown", 16_000)]
+    assert sink.pushes == [pcm]
 
 
 async def test_inmemory_bot_mapping_takes_precedence(handler, webhook_handler_stub, sink) -> None:

@@ -178,15 +178,14 @@ class RecallWsHandler:
         if session.bot_id is None and bot_id:
             resolved = await self._resolve_meeting_id(bot_id)
             if not resolved:
-                logger.warning(
-                    "RecallWsHandler: meeting_id 解決失敗 bot_id=%s → 1008 close",
+                # フォールバック: 正規の MeetingBot 経由でないテスト・実験用途で
+                # mapping が無くてもデータを受け取れるよう bot_id を meeting_id として扱う。
+                # 本番運用で MeetingBot 経由なら _resolve_meeting_id がヒットするのでここに来ない。
+                resolved = bot_id
+                logger.info(
+                    "RecallWsHandler: meeting_id 未登録 → bot_id をフォールバック使用 bot_id=%s",
                     bot_id,
                 )
-                await ws.close(
-                    code=WSCloseCode.POLICY_VIOLATION,
-                    message=b"unknown bot",
-                )
-                return
             session.bot_id = bot_id
             session.meeting_id = resolved
             await self._safe_sink_open(
