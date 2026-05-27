@@ -8,7 +8,6 @@ def _run(coro):
 
 def _make_session(meeting_id="m1"):
     """Return a minimal _ConnectionState-like mock."""
-    import collections
     from unittest.mock import MagicMock
     session = MagicMock()
     session.meeting_id = meeting_id
@@ -27,6 +26,7 @@ def _make_handler(suppress: bool):
     handler = RecallWsHandler(
         cosmos_client=mock_cosmos,
         on_utterance=mock_cb,
+        webhook_secret="whsec_dGVzdC1zZWNyZXQta2V5LTMyYnl0ZXMtcGFkZGluZyEh",
         suppress_native_transcript=suppress,
     )
     handler._mock_cb = mock_cb
