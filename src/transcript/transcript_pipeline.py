@@ -20,14 +20,14 @@ def extract_utterance_from_transcript_data(
 ) -> Optional[Utterance]:
     """
     Recall.ai の transcript.data envelope (webhook / websocket 共通) から
-    確定 (is_final) の発話を Utterance に変換する。
+    確定発話を Utterance に変換する。
 
     payload 形式:
         {
             "event": "transcript.data",
             "data": {
                 "data": {
-                    "is_final": true,
+                    "is_final": true,          # webhook 経路で出現する
                     "words": [{"text": ...}, ...],
                     "participant": {"id": int, "name": str},
                     "language_code": "ja",
@@ -36,6 +36,13 @@ def extract_utterance_from_transcript_data(
                 ...
             }
         }
+
+    is_final の扱い:
+        - webhook 経路は data.data.is_final を常に持つ (True/False)
+        - realtime WebSocket 経路は **is_final フィールド自体を持たない**。
+          event 名 (transcript.data vs transcript.partial_data) で
+          final / partial を区別する設計。
+        - そのため「明示的に False の時だけ reject」「欠落は確定扱い」とする。
 
     返り値:
         Utterance (有効な発話の場合)
@@ -47,7 +54,8 @@ def extract_utterance_from_transcript_data(
     data = data_outer.get("data")
     if not isinstance(data, dict):
         return None
-    if not data.get("is_final", False):
+    # 明示的な False のみ reject。欠落 (None) は確定扱い (WS realtime の挙動と整合)。
+    if data.get("is_final") is False:
         return None
 
     words = data.get("words")

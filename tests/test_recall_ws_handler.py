@@ -358,6 +358,57 @@ async def test_non_final_transcript_is_ignored(handler, webhook_handler_stub, co
     assert on_utterance.await_count == 0
 
 
+async def test_realtime_ws_transcript_without_is_final_is_accepted(
+    handler, webhook_handler_stub, cosmos, on_utterance
+) -> None:
+    """
+    Recall realtime WebSocket は transcript.data の data.data に is_final を含めない。
+    event 名で final/partial を区別する設計。
+    欠落は確定扱いとして処理されることを保証する (regression テスト)。
+    """
+    webhook_handler_stub._bot_to_meeting["bot-RT"] = "meet-RT"
+    # is_final フィールドを意図的に欠落させた envelope
+    envelope = {
+        "event": "transcript.data",
+        "data": {
+            "data": {
+                # NOTE: is_final intentionally omitted (matches Recall WS realtime payload)
+                "words": [{"text": "こんにちは"}, {"text": "テスト"}],
+                "language_code": "ja",
+                "participant": {"id": 1, "name": "田中 太郎", "is_host": False},
+            },
+            "bot": {"id": "bot-RT", "metadata": {}},
+            "transcript": {"id": "trn_x", "metadata": {}},
+            "recording": {"id": "rec_x", "metadata": {}},
+            "realtime_endpoint": {"id": "rte_x", "metadata": {}},
+        },
+    }
+    client, server = await _make_client(handler)
+    ts = int(_FIXED_NOW)
+    try:
+        ws = await client.ws_connect(
+            "/api/recall/ws",
+            headers={
+                "webhook-id": "msg-RT",
+                "webhook-timestamp": str(ts),
+                "webhook-signature": _sign_upgrade("msg-RT", ts),
+            },
+        )
+        await ws.send_json(envelope)
+        for _ in range(20):
+            if on_utterance.await_count:
+                break
+            await asyncio.sleep(0.05)
+        await ws.close()
+    finally:
+        await client.close()
+        await server.close()
+    assert cosmos.save_utterance.await_count == 1
+    saved = cosmos.save_utterance.await_args.args[0]
+    assert saved.text == "こんにちはテスト"
+    on_utterance.assert_awaited_once()
+
+
 async def test_invalid_json_does_not_close_connection(handler, webhook_handler_stub, sink) -> None:
     webhook_handler_stub._bot_to_meeting["bot-J"] = "meet-J"
     client, server = await _make_client(handler)
