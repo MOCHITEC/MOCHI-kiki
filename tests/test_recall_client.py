@@ -75,7 +75,8 @@ async def test_create_bot_success_returns_id():
     assert "transcript.data" in rt["events"]
     provider = body["recording_config"]["transcript"]["provider"]
     assert provider["recallai_streaming"]["language_code"] == "ja"
-    assert provider["recallai_streaming"]["mode"] == "prioritize_low_latency"
+    # Recall 仕様で ja は prioritize_accuracy しか使えないため、自動選択でこちらになる
+    assert provider["recallai_streaming"]["mode"] == "prioritize_accuracy"
 
 
 @pytest.mark.asyncio

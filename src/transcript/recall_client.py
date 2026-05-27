@@ -22,9 +22,12 @@ _TEAMS_URL_PATTERN = re.compile(
 _VALID_TRANSPORTS = {"webhook", "websocket", "both"}
 # recallai_streaming provider の動作モード。
 # prioritize_low_latency: 部分/確定イベントを realtime WS で随時送信する。
-# prioritize_accuracy:    精度重視で realtime 送信を抑制し、batch transcript を中心に提供する。
-# WS で transcript.data を確実に受け取りたい場合は前者を指定する。
+#                          ただし Recall 側仕様で 'english' 以外 (ja 等) では使えない
+#                          ("language_code other than english is not supported in low latency mode")
+# prioritize_accuracy:    精度重視。非英語ではこちらしか選べない (Recall 既定)。
 _VALID_REALTIME_MODES = {"prioritize_low_latency", "prioritize_accuracy"}
+# 簡易判定: en で始まるものを英語扱いにする (en, en-US, en-GB, ... english)
+_ENGLISH_LANG_PREFIXES = ("en", "english")
 
 
 class RecallBotClient:
@@ -50,7 +53,7 @@ class RecallBotClient:
         transport: str = "webhook",
         ws_url: Optional[str] = None,
         ws_events: Optional[Iterable[str]] = None,
-        realtime_mode: str = "prioritize_low_latency",
+        realtime_mode: Optional[str] = None,
     ) -> None:
         if not api_key:
             raise ValueError("Recall api_key は必須")
@@ -58,6 +61,12 @@ class RecallBotClient:
             raise ValueError(
                 f"transport は {_VALID_TRANSPORTS} のいずれか (got {transport!r})"
             )
+        # 非英語で prioritize_low_latency は Recall 側でエラーになるため、
+        # 既定で言語に応じて自動選択する (明示指定があればそれを尊重)。
+        if realtime_mode is None:
+            lc = (language_code or "").lower()
+            is_english = any(lc == p or lc.startswith(p + "-") for p in _ENGLISH_LANG_PREFIXES)
+            realtime_mode = "prioritize_low_latency" if is_english else "prioritize_accuracy"
         if realtime_mode not in _VALID_REALTIME_MODES:
             raise ValueError(
                 f"realtime_mode は {_VALID_REALTIME_MODES} のいずれか "

@@ -108,3 +108,44 @@ def test_unknown_transport_rejected() -> None:
 def test_webhook_transport_still_requires_https() -> None:
     with pytest.raises(ValueError):
         _client(webhook_url="http://insecure.example/", transport="webhook")
+
+
+def test_realtime_mode_auto_selects_accuracy_for_japanese() -> None:
+    c = _client(language_code="ja")
+    body = c._build_create_body(_MEETING)
+    assert (
+        body["recording_config"]["transcript"]["provider"]["recallai_streaming"]["mode"]
+        == "prioritize_accuracy"
+    )
+
+
+def test_realtime_mode_auto_selects_low_latency_for_english() -> None:
+    c = _client(language_code="en")
+    body = c._build_create_body(_MEETING)
+    assert (
+        body["recording_config"]["transcript"]["provider"]["recallai_streaming"]["mode"]
+        == "prioritize_low_latency"
+    )
+
+
+def test_realtime_mode_auto_selects_low_latency_for_english_regional() -> None:
+    c = _client(language_code="en-US")
+    body = c._build_create_body(_MEETING)
+    assert (
+        body["recording_config"]["transcript"]["provider"]["recallai_streaming"]["mode"]
+        == "prioritize_low_latency"
+    )
+
+
+def test_realtime_mode_explicit_override_is_respected() -> None:
+    c = _client(language_code="ja", realtime_mode="prioritize_low_latency")
+    body = c._build_create_body(_MEETING)
+    assert (
+        body["recording_config"]["transcript"]["provider"]["recallai_streaming"]["mode"]
+        == "prioritize_low_latency"
+    )
+
+
+def test_realtime_mode_invalid_value_rejected() -> None:
+    with pytest.raises(ValueError):
+        _client(realtime_mode="turbo")

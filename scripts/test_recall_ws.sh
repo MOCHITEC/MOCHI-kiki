@@ -86,7 +86,7 @@ RESP="$(curl -sS -X POST "$RECALL_BASE/api/v1/bot" \
   "bot_name": "MOCHI-kiki-test",
   "recording_config": {
     "transcript": {
-      "provider": {"recallai_streaming": {"language_code": "ja", "mode": "prioritize_low_latency"}}
+      "provider": {"recallai_streaming": {"language_code": "ja", "mode": "prioritize_accuracy"}}
     },
     "audio_mixed_raw": {},
     "realtime_endpoints": [
