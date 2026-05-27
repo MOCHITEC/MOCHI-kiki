@@ -256,11 +256,36 @@ class WhisperAudioSink:
     async def _flush(self, pcm: bytes) -> None:
         if len(pcm) < self._min_segment_bytes:
             return
-        raise NotImplementedError("_flush implemented in Task 4")
+        if self._meeting_id is None:
+            return
+        wav = _pcm_to_wav(pcm)
+        try:
+            response = await self._client.audio.transcriptions.create(
+                model=self._deployment,
+                file=("segment.wav", wav, "audio/wav"),
+                language="ja",
+            )
+            text = (response.text or "").strip()
+            if not text:
+                return
+            from src.models import Utterance
+            utterance = Utterance.new(
+                meeting_id=self._meeting_id,
+                speaker_id="whisper",
+                speaker_name="Whisper ASR",
+                text=text,
+            )
+            await self._on_utterance(utterance)
+        except Exception:
+            logger.exception("WhisperAudioSink: Whisper API flush failed")
 
 
 def build_audio_sink(kind: str) -> AudioSink:
-    """Config の RECALL_AUDIO_SINK 値から Sink を組み立てるファクトリ。"""
+    """Config の RECALL_AUDIO_SINK 値から Sink を組み立てるファクトリ。
+
+    Supported sinks: "noop", "file", "azure_speech".
+    Use "azure_openai_whisper" via WhisperAudioSink directly — requires openai_client.
+    """
     if kind == "noop":
         return NoopAudioSink()
     if kind == "file":
