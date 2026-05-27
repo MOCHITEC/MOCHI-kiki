@@ -4,7 +4,6 @@
 Usage:
     python scripts/leave_bot.py <BOT_ID>
 """
-import json
 import os
 import re
 import sys
@@ -38,7 +37,7 @@ def main() -> None:
     api_key = os.environ.get("RECALL_API_KEY", "").strip()
     region  = os.environ.get("RECALL_REGION", "ap-northeast-1").strip()
     if not api_key:
-        sys.exit("❌  RECALL_API_KEY not set in .env")
+        sys.exit("ERROR: RECALL_API_KEY not set in .env")
 
     url = f"https://{region}.recall.ai/api/v1/bot/{bot_id}/leave_call/"
     req = urllib.request.Request(
@@ -52,8 +51,11 @@ def main() -> None:
             print(f"[OK] Bot {bot_id} told to leave (HTTP {resp.status})")
     except urllib.error.HTTPError as e:
         body = e.read().decode(errors="replace")
-        print(f"❌  HTTP {e.code}: {body}")
-        sys.exit(1)
+        if e.code == 400:
+            print(f"[INFO] HTTP 400 -- bot {bot_id} has already left or ended.")
+        else:
+            print(f"[ERROR] HTTP {e.code}: {body}")
+            sys.exit(1)
 
 
 if __name__ == "__main__":
