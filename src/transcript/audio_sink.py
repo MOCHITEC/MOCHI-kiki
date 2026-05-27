@@ -212,6 +212,7 @@ class WhisperAudioSink:
             self._buffer = self._buffer[drop:]
             self._processed = max(0, self._processed - drop)
             self._speech_end = max(0, self._speech_end - drop)
+            self._consecutive_silence = 0
             logger.warning("WhisperAudioSink: buffer overflow, dropped %d bytes", drop)
 
         self._buffer.extend(pcm_bytes)
@@ -237,8 +238,9 @@ class WhisperAudioSink:
                     self._speech_end = self._processed
                 self._consecutive_silence += 1
                 if self._consecutive_silence >= self._silence_frames_needed:
-                    speech = bytes(self._buffer[: self._speech_end])
-                    await self._flush(speech)
+                    if self._speech_end > 0:
+                        speech = bytes(self._buffer[: self._speech_end])
+                        await self._flush(speech)
                     self._reset()
                     return
             else:

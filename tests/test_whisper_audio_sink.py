@@ -78,7 +78,7 @@ def _make_sink(
 
 
 def _run(coro):
-    return asyncio.get_event_loop().run_until_complete(coro)
+    return asyncio.run(coro)
 
 
 def test_silence_triggers_flush():
