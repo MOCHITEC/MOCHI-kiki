@@ -20,6 +20,11 @@ _TEAMS_URL_PATTERN = re.compile(
 )
 
 _VALID_TRANSPORTS = {"webhook", "websocket", "both"}
+# recallai_streaming provider の動作モード。
+# prioritize_low_latency: 部分/確定イベントを realtime WS で随時送信する。
+# prioritize_accuracy:    精度重視で realtime 送信を抑制し、batch transcript を中心に提供する。
+# WS で transcript.data を確実に受け取りたい場合は前者を指定する。
+_VALID_REALTIME_MODES = {"prioritize_low_latency", "prioritize_accuracy"}
 
 
 class RecallBotClient:
@@ -45,12 +50,18 @@ class RecallBotClient:
         transport: str = "webhook",
         ws_url: Optional[str] = None,
         ws_events: Optional[Iterable[str]] = None,
+        realtime_mode: str = "prioritize_low_latency",
     ) -> None:
         if not api_key:
             raise ValueError("Recall api_key は必須")
         if transport not in _VALID_TRANSPORTS:
             raise ValueError(
                 f"transport は {_VALID_TRANSPORTS} のいずれか (got {transport!r})"
+            )
+        if realtime_mode not in _VALID_REALTIME_MODES:
+            raise ValueError(
+                f"realtime_mode は {_VALID_REALTIME_MODES} のいずれか "
+                f"(got {realtime_mode!r})"
             )
         if transport in ("webhook", "both"):
             if not webhook_url or not webhook_url.startswith("https://"):
@@ -74,6 +85,7 @@ class RecallBotClient:
         self._ws_events: tuple[str, ...] = tuple(ws_events or ())
         if transport in ("websocket", "both") and not self._ws_events:
             raise ValueError("transport が websocket/both の場合 ws_events は必須")
+        self._realtime_mode = realtime_mode
 
     @property
     def _base_url(self) -> str:
@@ -164,7 +176,10 @@ class RecallBotClient:
         recording_config: dict = {
             "transcript": {
                 "provider": {
-                    "recallai_streaming": {"language_code": self._language_code}
+                    "recallai_streaming": {
+                        "language_code": self._language_code,
+                        "mode": self._realtime_mode,
+                    }
                 },
                 "diarization": {"use_separate_streams_when_available": True},
             },

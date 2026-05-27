@@ -126,8 +126,11 @@ class RecallWsHandler:
             if not ws.closed:
                 await ws.close()
             logger.info(
-                "RecallWsHandler: closed bot_id=%s msgs=%d audio_bytes=%d drops=%d",
+                "RecallWsHandler: closed bot_id=%s msgs=%d audio_bytes=%d drops=%d "
+                "transcript_final=%d transcript_partial=%d extract_none=%d",
                 session.bot_id, session.msg_count, session.audio_bytes, session.drop_count,
+                session.transcript_final_count, session.transcript_partial_count,
+                session.transcript_extract_none_count,
             )
         return ws
 
@@ -291,12 +294,30 @@ class RecallWsHandler:
         if partial:
             # partial は orchestrator に流さない（既存規約と整合）。
             # 必要な場合は spec FT-RECALL-WS-PARTIAL で扱う。
+            session.transcript_partial_count += 1
+            if session.transcript_partial_count <= 5 or session.transcript_partial_count % 50 == 0:
+                logger.info(
+                    "RecallWsHandler: transcript.partial received n=%d (dropped)",
+                    session.transcript_partial_count,
+                )
             return
+        session.transcript_final_count += 1
         utterance = extract_utterance_from_transcript_data(
             payload, meeting_id=session.meeting_id
         )
         if utterance is None:
+            session.transcript_extract_none_count += 1
+            logger.info(
+                "RecallWsHandler: transcript.data received but extract returned None n=%d",
+                session.transcript_extract_none_count,
+            )
             return
+        # 発話内容自体はログに残さない（PII 配慮）。長さのみ記録。
+        text_len = len(getattr(utterance, "text", "") or "")
+        logger.info(
+            "RecallWsHandler: transcript.data extracted utterance_id=%s text_len=%d",
+            utterance.utterance_id, text_len,
+        )
         try:
             await self._cosmos.save_utterance(utterance)
         except Exception:
@@ -409,6 +430,8 @@ class _ConnectionState:
     """1 WebSocket 接続のローカル状態。"""
     __slots__ = (
         "bot_id", "meeting_id", "pending", "msg_count", "audio_bytes", "drop_count",
+        "transcript_final_count", "transcript_partial_count",
+        "transcript_extract_none_count",
     )
 
     def __init__(self) -> None:
@@ -418,3 +441,6 @@ class _ConnectionState:
         self.msg_count: int = 0
         self.audio_bytes: int = 0
         self.drop_count: int = 0
+        self.transcript_final_count: int = 0
+        self.transcript_partial_count: int = 0
+        self.transcript_extract_none_count: int = 0
