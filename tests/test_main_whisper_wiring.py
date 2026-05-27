@@ -25,7 +25,7 @@ def _base_env(monkeypatch) -> None:
     monkeypatch.setenv("RECALL_TRANSPORT", "websocket")
 
 
-def _run_main_once(monkeypatch, extra_patches: dict) -> dict:
+def _run_main_once(monkeypatch) -> dict:
     """
     Run src.main.main() exactly until the infinite wait, then cancel.
     Returns a dict of mock objects keyed by name.
@@ -126,7 +126,7 @@ def test_whisper_sink_constructed_when_env_set(monkeypatch):
     monkeypatch.setenv("RECALL_AUDIO_SINK", "azure_openai_whisper")
     monkeypatch.setenv("RECALL_WHISPER_DEPLOYMENT", "whisper")
 
-    mocks = _run_main_once(monkeypatch, {})
+    mocks = _run_main_once(monkeypatch)
 
     MockSink = mocks["MockSink"]
     MockHandler = mocks["MockHandler"]
@@ -158,7 +158,7 @@ def test_default_sink_no_suppress(monkeypatch):
     _base_env(monkeypatch)
     monkeypatch.setenv("RECALL_AUDIO_SINK", "noop")
 
-    mocks = _run_main_once(monkeypatch, {})
+    mocks = _run_main_once(monkeypatch)
 
     MockSink = mocks["MockSink"]
     MockHandler = mocks["MockHandler"]

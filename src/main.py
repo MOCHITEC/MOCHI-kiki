@@ -58,8 +58,9 @@ async def main() -> None:
     # 2.b Recall WS handler (transport が websocket/both のとき有効)
     recall_ws_handler: Optional[RecallWsHandler] = None
     audio_sink = None
+    _use_whisper = config.recall_audio_sink == "azure_openai_whisper"
     if config.recall_transport in ("websocket", "both"):
-        if config.recall_audio_sink == "azure_openai_whisper":
+        if _use_whisper:
             from src.transcript.audio_sink import WhisperAudioSink
             openai_client = AsyncAzureOpenAI(
                 azure_endpoint=config.azure_openai_endpoint,
@@ -83,7 +84,7 @@ async def main() -> None:
             audio_sink=audio_sink,
             webhook_secret=config.recall_webhook_secret,
             webhook_handler=recall_handler,
-            suppress_native_transcript=config.recall_audio_sink == "azure_openai_whisper",
+            suppress_native_transcript=_use_whisper,
         )
         logger.info(
             "RecallWsHandler 起動 (audio_sink=%s, events=%s)",
@@ -140,23 +141,23 @@ async def main() -> None:
         app_id=config.microsoft_app_id,
     )
 
-    # 6. set orchestrator.set_cosmos(cosmos)
+    # 7. set orchestrator.set_cosmos(cosmos)
     orchestrator.set_cosmos(cosmos)
 
-    # 7. set bot._orchestrator = orchestrator
+    # 8. set bot._orchestrator = orchestrator
     bot._orchestrator = orchestrator
 
-    # 8. define on_utterance closure using orchestrator
+    # 9. define on_utterance closure using orchestrator
     async def on_utterance(utterance: Utterance) -> None:
         logger.info(f"[発話受信] {utterance.speaker_name}: {utterance.text}")
         await orchestrator.process(utterance)
 
-    # 9. inject on_utterance into bot & handlers
+    # 10. inject on_utterance into bot & handlers
     bot._on_utterance = on_utterance
     recall_handler.set_on_utterance(on_utterance)
     if recall_ws_handler is not None:
         recall_ws_handler.set_on_utterance(on_utterance)
-    if config.recall_audio_sink == "azure_openai_whisper" and audio_sink is not None:
+    if _use_whisper and audio_sink is not None:
         audio_sink.set_on_utterance(on_utterance)
 
     # 9.b （deprecated）旧ルータ。Phase 6 で削除。

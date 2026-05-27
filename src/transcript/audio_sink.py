@@ -167,7 +167,7 @@ class WhisperAudioSink:
         self,
         openai_client: "object",       # AsyncAzureOpenAI; typed as object to avoid import cycle
         whisper_deployment: str,
-        on_utterance: Callable[["object"], Awaitable[None]],
+        on_utterance: Optional[Callable[["object"], Awaitable[None]]],
         *,
         silence_rms_threshold: int = 300,
         silence_duration_ms: int = 600,
@@ -278,6 +278,8 @@ class WhisperAudioSink:
                 speaker_name="Whisper ASR",
                 text=text,
             )
+            if self._on_utterance is None:
+                return
             await self._on_utterance(utterance)
         except Exception:
             logger.exception("WhisperAudioSink: Whisper API flush failed")
