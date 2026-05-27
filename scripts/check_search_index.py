@@ -28,7 +28,7 @@ def main() -> int:
     index_name = os.environ.get("AZURE_SEARCH_INDEX", "documents")
 
     if not endpoint or not key:
-        print("✗ AZURE_SEARCH_ENDPOINT and AZURE_SEARCH_KEY must be set", file=sys.stderr)
+        print("[ERROR] AZURE_SEARCH_ENDPOINT and AZURE_SEARCH_KEY must be set", file=sys.stderr)
         return 1
 
     credential = AzureKeyCredential(key)
@@ -37,18 +37,18 @@ def main() -> int:
     index_client = SearchIndexClient(endpoint=endpoint, credential=credential)
     try:
         index_client.get_index(index_name)
-        print(f"✓ Index exists: {index_name}")
+        print(f"[OK] Index exists: {index_name}")
     except Exception as e:
-        print(f"✗ Index not found: {index_name} ({e})", file=sys.stderr)
+        print(f"[ERROR] Index not found: {index_name} ({e})", file=sys.stderr)
         return 1
 
     # 2. Document count
     search_client = SearchClient(endpoint=endpoint, index_name=index_name, credential=credential)
     try:
         count = search_client.get_document_count()
-        print(f"✓ Documents: {count}")
+        print(f"[OK] Documents: {count}")
     except Exception as e:
-        print(f"✗ Could not get document count: {e}", file=sys.stderr)
+        print(f"[ERROR] Could not get document count: {e}", file=sys.stderr)
         return 1
 
     # 3. Vector search smoke test using a zero vector as a no-op probe
@@ -66,11 +66,11 @@ def main() -> int:
             top=3,
         ))
         if results:
-            print(f"✓ Vector search: returned {len(results)} results")
+            print(f"[OK] Vector search: returned {len(results)} results")
         else:
-            print("○ Vector search: no results (index may be empty)")
+            print("[INFO] Vector search: no results (index may be empty)")
     except Exception as e:
-        print(f"✗ Vector search failed: {e}", file=sys.stderr)
+        print(f"[ERROR] Vector search failed: {e}", file=sys.stderr)
 
     return 0
 

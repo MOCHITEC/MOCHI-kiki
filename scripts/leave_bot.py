@@ -49,7 +49,7 @@ def main() -> None:
     )
     try:
         with urllib.request.urlopen(req) as resp:
-            print(f"✓  Bot {bot_id} told to leave (HTTP {resp.status})")
+            print(f"[OK] Bot {bot_id} told to leave (HTTP {resp.status})")
     except urllib.error.HTTPError as e:
         body = e.read().decode(errors="replace")
         print(f"❌  HTTP {e.code}: {body}")
