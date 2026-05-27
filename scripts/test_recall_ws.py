@@ -9,7 +9,6 @@ import asyncio
 import json
 import os
 import re
-import subprocess
 import sys
 import time
 import urllib.request
@@ -41,21 +40,16 @@ def require(key: str) -> str:
     return val
 
 
-def az_fqdn(app: str, rg: str) -> str:
-    try:
-        result = subprocess.run(
-            ["az", "containerapp", "show", "-n", app, "-g", rg,
-             "--query", "properties.configuration.ingress.fqdn", "-o", "tsv"],
-            capture_output=True, text=True, check=True
-        )
-        fqdn = result.stdout.strip()
-        if not fqdn:
-            sys.exit("❌  Could not get FQDN — is 'az login' done and does the app exist?")
-        return fqdn
-    except FileNotFoundError:
-        sys.exit("❌  Azure CLI ('az') not found. Install it from https://aka.ms/installazurecliwindows")
-    except subprocess.CalledProcessError as e:
-        sys.exit(f"❌  az containerapp show failed:\n{e.stderr}")
+def get_ws_url() -> str:
+    # Use RECALL_WS_PUBLIC_URL from .env (already the full wss:// URL)
+    ws_url = os.environ.get("RECALL_WS_PUBLIC_URL", "").strip()
+    if ws_url:
+        return ws_url
+    sys.exit(
+        "❌  RECALL_WS_PUBLIC_URL is not set in .env\n"
+        "    Set it to the WebSocket URL of your deployed bot, e.g.:\n"
+        "    RECALL_WS_PUBLIC_URL=wss://your-app.azurecontainerapps.io/api/recall/ws"
+    )
 
 
 def recall_create_bot(base: str, api_key: str, meeting_url: str, ws_url: str) -> str:
@@ -148,14 +142,11 @@ def main() -> None:
     cosmos_key     = require("AZURE_COSMOS_KEY")
     cosmos_db      = os.environ.get("COSMOS_DATABASE", "meeting_db")
     recall_region  = os.environ.get("RECALL_REGION", "ap-northeast-1")
-    rg_name        = os.environ.get("RG_NAME", "rg-mochi-kiki")
     app_name       = os.environ.get("APP_NAME", "mochikiki-bot-dev")
+    rg_name        = os.environ.get("RG_NAME", "rg-mochi-kiki")
 
     recall_base = f"https://{recall_region}.recall.ai"
-
-    print("Getting Container App FQDN...")
-    fqdn   = az_fqdn(app_name, rg_name)
-    ws_url = f"wss://{fqdn}/api/recall/ws"
+    ws_url      = get_ws_url()
 
     print()
     print("════════════════════════════════════════════════════════")
