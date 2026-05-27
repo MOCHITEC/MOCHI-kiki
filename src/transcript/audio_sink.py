@@ -11,13 +11,43 @@ Azure AI Speech などへの実接続は別 spec で扱う。
 """
 from __future__ import annotations
 
+import io
 import logging
+import math
 import os
+import struct
 import threading
+import wave
 from pathlib import Path
 from typing import Protocol, runtime_checkable
 
 logger = logging.getLogger(__name__)
+
+
+_SAMPLE_RATE = 16_000
+_BYTES_PER_SAMPLE = 2        # S16LE
+_FRAME_MS = 20
+_FRAME_SAMPLES = _SAMPLE_RATE * _FRAME_MS // 1000   # 320
+_FRAME_BYTES = _FRAME_SAMPLES * _BYTES_PER_SAMPLE   # 640
+
+
+def _compute_rms(frame: bytes) -> float:
+    n = len(frame) // _BYTES_PER_SAMPLE
+    if n == 0:
+        return 0.0
+    samples = struct.unpack(f"<{n}h", frame[:n * _BYTES_PER_SAMPLE])
+    mean_sq = sum(s * s for s in samples) / n
+    return math.sqrt(mean_sq)
+
+
+def _pcm_to_wav(pcm: bytes) -> bytes:
+    buf = io.BytesIO()
+    with wave.open(buf, "wb") as wf:
+        wf.setnchannels(1)
+        wf.setsampwidth(_BYTES_PER_SAMPLE)
+        wf.setframerate(_SAMPLE_RATE)
+        wf.writeframes(pcm)
+    return buf.getvalue()
 
 
 @runtime_checkable
