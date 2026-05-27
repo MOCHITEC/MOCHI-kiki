@@ -70,9 +70,11 @@ class RecallWsHandler:
         webhook_handler: Optional["RecallWebhookHandler"] = None,
         clock: Callable[[], float] = time.time,
         heartbeat_seconds: float = _DEFAULT_HEARTBEAT_SECONDS,
+        suppress_native_transcript: bool = False,
     ) -> None:
         self._cosmos = cosmos_client
         self._on_utterance = on_utterance
+        self._suppress_native_transcript = suppress_native_transcript
         self._audio_sink: AudioSink = audio_sink or NoopAudioSink()
         self._webhook_handler = webhook_handler
         self._clock = clock
@@ -289,6 +291,8 @@ class RecallWsHandler:
     async def _handle_transcript(
         self, session: "_ConnectionState", payload: dict, *, partial: bool
     ) -> None:
+        if self._suppress_native_transcript:
+            return
         if session.meeting_id is None:
             return
         if partial:
