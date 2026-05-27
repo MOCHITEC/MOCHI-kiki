@@ -307,9 +307,13 @@ class RecallWsHandler:
         )
         if utterance is None:
             session.transcript_extract_none_count += 1
+            # 何が原因で None になっているか診断するための形状ダンプ。
+            # 発話内容自体はログに残さない (text は長さのみ)。
+            shape = _summarize_transcript_payload(payload)
             logger.info(
-                "RecallWsHandler: transcript.data received but extract returned None n=%d",
-                session.transcript_extract_none_count,
+                "RecallWsHandler: transcript.data received but extract returned None "
+                "n=%d shape=%s",
+                session.transcript_extract_none_count, shape,
             )
             return
         # 発話内容自体はログに残さない（PII 配慮）。長さのみ記録。
@@ -424,6 +428,41 @@ class RecallWsHandler:
             raise RecallWsSecretError(
                 "Recall WS secret の base64 デコードに失敗"
             ) from exc
+
+
+def _summarize_transcript_payload(payload: dict) -> str:
+    """transcript.data の構造だけ要約 (PII 漏洩防止のため value は出さない)。
+
+    出力例:
+        keys=[event,data] data_keys=[data,bot] inner_keys=[is_final,words,participant]
+        is_final=False words_type=list words_n=3 word0_type=dict word0_keys=[text]
+    """
+    parts: list[str] = []
+    try:
+        parts.append(f"keys={list(payload.keys()) if isinstance(payload, dict) else type(payload).__name__}")
+        data_outer = payload.get("data") if isinstance(payload, dict) else None
+        parts.append(f"data_type={type(data_outer).__name__}")
+        if isinstance(data_outer, dict):
+            parts.append(f"data_keys={list(data_outer.keys())}")
+            inner = data_outer.get("data")
+            parts.append(f"inner_type={type(inner).__name__}")
+            if isinstance(inner, dict):
+                parts.append(f"inner_keys={list(inner.keys())}")
+                parts.append(f"is_final={inner.get('is_final')!r}")
+                w = inner.get("words")
+                parts.append(f"words_type={type(w).__name__}")
+                if isinstance(w, list):
+                    parts.append(f"words_n={len(w)}")
+                    if w:
+                        w0 = w[0]
+                        parts.append(f"word0_type={type(w0).__name__}")
+                        if isinstance(w0, dict):
+                            parts.append(f"word0_keys={list(w0.keys())}")
+                        elif isinstance(w0, str):
+                            parts.append(f"word0_len={len(w0)}")
+    except Exception as e:
+        parts.append(f"summarize_error={type(e).__name__}")
+    return " ".join(parts)
 
 
 class _ConnectionState:
