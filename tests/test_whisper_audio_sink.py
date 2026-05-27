@@ -3,7 +3,7 @@ import struct
 import wave
 import pytest
 
-from src.transcript.audio_sink import _compute_rms, _pcm_to_wav, _FRAME_BYTES
+from src.transcript.audio_sink import _compute_rms, _pcm_to_wav
 
 
 def _make_pcm(amplitude: int, n_samples: int = 320) -> bytes:
@@ -120,7 +120,7 @@ def test_max_segment_hard_flush():
     speech = _make_pcm(2000, n_samples=320) * 10
     _run(sink.push(meeting_id="m1", pcm_bytes=speech, absolute_ts="", relative_ts=0.0))
 
-    sink._mock_client.audio.transcriptions.create.assert_awaited()
+    sink._mock_client.audio.transcriptions.create.assert_awaited_once()
 
 
 def test_on_close_flushes_remaining():

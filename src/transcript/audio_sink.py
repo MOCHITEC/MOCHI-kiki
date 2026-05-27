@@ -21,6 +21,8 @@ import wave
 from pathlib import Path
 from typing import Awaitable, Callable, Optional, Protocol, runtime_checkable
 
+from src.models import Utterance
+
 logger = logging.getLogger(__name__)
 
 
@@ -171,10 +173,12 @@ class WhisperAudioSink:
         silence_duration_ms: int = 600,
         min_segment_secs: float = 1.0,
         max_segment_secs: float = 30.0,
+        language: str = "ja",
     ) -> None:
         self._client = openai_client
         self._deployment = whisper_deployment
         self._on_utterance = on_utterance
+        self._language = language
         self._silence_threshold = silence_rms_threshold
         self._silence_frames_needed = max(1, silence_duration_ms // _FRAME_MS)
         self._min_segment_bytes = int(min_segment_secs * _SAMPLE_RATE * _BYTES_PER_SAMPLE)
@@ -263,12 +267,11 @@ class WhisperAudioSink:
             response = await self._client.audio.transcriptions.create(
                 model=self._deployment,
                 file=("segment.wav", wav, "audio/wav"),
-                language="ja",
+                language=self._language,
             )
             text = (response.text or "").strip()
             if not text:
                 return
-            from src.models import Utterance
             utterance = Utterance.new(
                 meeting_id=self._meeting_id,
                 speaker_id="whisper",
