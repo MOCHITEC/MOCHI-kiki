@@ -17,6 +17,7 @@ from dotenv import load_dotenv
 load_dotenv(Path(__file__).parent.parent / ".env")
 
 from azure.search.documents.indexes import SearchIndexClient
+from azure.search.documents.models import VectorizedQuery
 from azure.core.credentials import AzureKeyCredential
 from azure.search.documents import SearchClient
 
@@ -48,11 +49,11 @@ def main() -> int:
         print(f"✓ Documents: {count}")
     except Exception as e:
         print(f"✗ Could not get document count: {e}", file=sys.stderr)
+        return 1
 
     # 3. Vector search smoke test using a zero vector as a no-op probe
     # The index uses a 1536-dim field named "content_vector" (text-embedding-3-small)
     try:
-        from azure.search.documents.models import VectorizedQuery
         zero_vector = [0.0] * 1536
         vector_query = VectorizedQuery(
             vector=zero_vector,
@@ -67,7 +68,7 @@ def main() -> int:
         if results:
             print(f"✓ Vector search: returned {len(results)} results")
         else:
-            print("✗ Vector search: no results (index may be empty)")
+            print("○ Vector search: no results (index may be empty)")
     except Exception as e:
         print(f"✗ Vector search failed: {e}", file=sys.stderr)
 
