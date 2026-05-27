@@ -19,7 +19,7 @@ import struct
 import threading
 import wave
 from pathlib import Path
-from typing import Protocol, runtime_checkable
+from typing import Awaitable, Callable, Optional, Protocol, runtime_checkable
 
 logger = logging.getLogger(__name__)
 
@@ -153,6 +153,108 @@ class FileAudioSink:
         except Exception:
             pass
         logger.info("FileAudioSink: closed meeting_id=%s reason=%s", meeting_id, reason)
+
+
+class WhisperAudioSink:
+    """
+    Silence-detecting AudioSink that transcribes speech segments via
+    Azure OpenAI Whisper.  S16LE 16kHz mono PCM only.
+    """
+
+    def __init__(
+        self,
+        openai_client: "object",       # AsyncAzureOpenAI; typed as object to avoid import cycle
+        whisper_deployment: str,
+        on_utterance: Callable[["object"], Awaitable[None]],
+        *,
+        silence_rms_threshold: int = 300,
+        silence_duration_ms: int = 600,
+        min_segment_secs: float = 1.0,
+        max_segment_secs: float = 30.0,
+    ) -> None:
+        self._client = openai_client
+        self._deployment = whisper_deployment
+        self._on_utterance = on_utterance
+        self._silence_threshold = silence_rms_threshold
+        self._silence_frames_needed = max(1, silence_duration_ms // _FRAME_MS)
+        self._min_segment_bytes = int(min_segment_secs * _SAMPLE_RATE * _BYTES_PER_SAMPLE)
+        self._max_segment_bytes = int(max_segment_secs * _SAMPLE_RATE * _BYTES_PER_SAMPLE)
+        self._max_buffer_bytes = 2 * 1024 * 1024  # 2 MB ≈ 62 s
+
+        self._meeting_id: Optional[str] = None
+        self._buffer = bytearray()
+        self._processed = 0
+        self._consecutive_silence = 0
+        self._speech_end = 0
+
+    def set_on_utterance(self, on_utterance: Callable[["object"], Awaitable[None]]) -> None:
+        self._on_utterance = on_utterance
+
+    async def on_open(self, *, meeting_id: str, bot_id: str, sample_rate: int) -> None:
+        self._meeting_id = meeting_id
+        self._reset()
+        logger.info("WhisperAudioSink: opened meeting_id=%s", meeting_id)
+
+    async def push(
+        self,
+        *,
+        meeting_id: str,
+        pcm_bytes: bytes,
+        absolute_ts: str,
+        relative_ts: float,
+    ) -> None:
+        if self._meeting_id is None:
+            return
+        # overflow: drop oldest bytes to make room
+        available = self._max_buffer_bytes - len(self._buffer)
+        if len(pcm_bytes) > available:
+            drop = len(pcm_bytes) - available
+            self._buffer = self._buffer[drop:]
+            self._processed = max(0, self._processed - drop)
+            self._speech_end = max(0, self._speech_end - drop)
+            logger.warning("WhisperAudioSink: buffer overflow, dropped %d bytes", drop)
+
+        self._buffer.extend(pcm_bytes)
+        await self._scan_new_frames()
+
+        if len(self._buffer) >= self._max_segment_bytes:
+            await self._flush(bytes(self._buffer))
+            self._reset()
+
+    async def on_close(self, *, meeting_id: str, reason: str) -> None:
+        if self._meeting_id and len(self._buffer) >= self._min_segment_bytes:
+            await self._flush(bytes(self._buffer))
+        self._reset()
+        self._meeting_id = None
+        logger.info("WhisperAudioSink: closed meeting_id=%s reason=%s", meeting_id, reason)
+
+    async def _scan_new_frames(self) -> None:
+        while self._processed + _FRAME_BYTES <= len(self._buffer):
+            frame = self._buffer[self._processed : self._processed + _FRAME_BYTES]
+            rms = _compute_rms(bytes(frame))
+            if rms < self._silence_threshold:
+                if self._consecutive_silence == 0:
+                    self._speech_end = self._processed
+                self._consecutive_silence += 1
+                if self._consecutive_silence >= self._silence_frames_needed:
+                    speech = bytes(self._buffer[: self._speech_end])
+                    await self._flush(speech)
+                    self._reset()
+                    return
+            else:
+                self._consecutive_silence = 0
+            self._processed += _FRAME_BYTES
+
+    def _reset(self) -> None:
+        self._buffer = bytearray()
+        self._processed = 0
+        self._consecutive_silence = 0
+        self._speech_end = 0
+
+    async def _flush(self, pcm: bytes) -> None:
+        if len(pcm) < self._min_segment_bytes:
+            return
+        raise NotImplementedError("_flush implemented in Task 4")
 
 
 def build_audio_sink(kind: str) -> AudioSink:
