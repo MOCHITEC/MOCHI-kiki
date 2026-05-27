@@ -12,10 +12,11 @@ def make_request(body: dict) -> MagicMock:
 VALID_PAYLOAD = {
     "event": "transcript.data",
     "data": {
-        "bot_id": "bot_abc123",
+        "bot": {"id": "bot_abc123"},
         "data": {
             "speaker": "田中 太郎",
-            "words": ["この", "仕様は"],
+            "words": [{"text": "この"}, {"text": "仕様は"}],
+            "participant": {"id": 99, "name": "田中 太郎"},
         },
     },
 }
@@ -54,8 +55,8 @@ async def test_valid_payload_calls_orchestrator(router, orchestrator):
     utterance = orchestrator.process.call_args[0][0]
     assert utterance.meeting_id == "bot_abc123"
     assert utterance.speaker_name == "田中 太郎"
-    assert utterance.speaker_id == "田中-太郎"
-    assert utterance.text == "この 仕様は"
+    assert utterance.speaker_id == "99"
+    assert utterance.text == "この仕様は"
 
 
 @pytest.mark.asyncio
@@ -71,8 +72,11 @@ async def test_empty_words_is_ignored(router, orchestrator):
     payload = {
         "event": "transcript.data",
         "data": {
-            "bot_id": "bot_abc123",
-            "data": {"speaker": "田中 太郎", "words": []},  # empty list
+            "bot": {"id": "bot_abc123"},
+            "data": {
+                "words": [],
+                "participant": {"id": 1, "name": "田中 太郎"},
+            },
         },
     }
     req = make_request(payload)
@@ -123,8 +127,11 @@ async def test_blank_text_after_strip_is_ignored(router, orchestrator):
     payload = {
         "event": "transcript.data",
         "data": {
-            "bot_id": "bot_abc123",
-            "data": {"speaker": "田中 太郎", "words": ["   "]},
+            "bot": {"id": "bot_abc123"},
+            "data": {
+                "words": [{"text": "   "}],
+                "participant": {"id": 1, "name": "田中 太郎"},
+            },
         },
     }
     req = make_request(payload)

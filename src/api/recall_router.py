@@ -1,6 +1,6 @@
 import logging
 from aiohttp import web
-from src.models import Utterance
+from src.transcript.transcript_pipeline import extract_utterance_from_transcript_data
 
 logger = logging.getLogger(__name__)
 
@@ -20,26 +20,11 @@ class RecallWebhookRouter:
             return web.Response(status=200)
 
         data = body.get("data", {})
-        inner = data.get("data", {})
-        words = inner.get("words", [])
+        bot_id = data.get("bot", {}).get("id") or data.get("bot_id", "unknown")
 
-        if not words:
+        utterance = extract_utterance_from_transcript_data(body, meeting_id=bot_id)
+        if utterance is None:
             return web.Response(status=200)
-
-        text = " ".join(w for w in words if isinstance(w, str)).strip()
-        if not text:
-            return web.Response(status=200)
-
-        bot_id = data.get("bot_id", "unknown")
-        speaker_name = inner.get("speaker", "不明")
-        speaker_id = speaker_name.replace(" ", "-")
-
-        utterance = Utterance.new(
-            meeting_id=bot_id,
-            speaker_id=speaker_id,
-            speaker_name=speaker_name,
-            text=text,
-        )
 
         if self._cosmos is not None:
             try:
