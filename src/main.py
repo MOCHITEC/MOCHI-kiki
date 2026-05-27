@@ -3,6 +3,7 @@ import logging
 from typing import Optional
 
 from aiohttp import web
+from openai import AsyncAzureOpenAI
 from src.config import Config
 from src.storage.cosmos_client import CosmosClient
 from src.transcript.graph_subscription import GraphTranscriptSubscription
@@ -56,14 +57,33 @@ async def main() -> None:
 
     # 2.b Recall WS handler (transport が websocket/both のとき有効)
     recall_ws_handler: Optional[RecallWsHandler] = None
+    audio_sink = None
     if config.recall_transport in ("websocket", "both"):
-        audio_sink = build_audio_sink(config.recall_audio_sink)
+        if config.recall_audio_sink == "azure_openai_whisper":
+            from src.transcript.audio_sink import WhisperAudioSink
+            openai_client = AsyncAzureOpenAI(
+                azure_endpoint=config.azure_openai_endpoint,
+                api_key=config.azure_openai_key,
+                api_version="2024-02-01",
+            )
+            audio_sink = WhisperAudioSink(
+                openai_client=openai_client,
+                whisper_deployment=config.whisper_deployment,
+                on_utterance=None,  # set later via set_on_utterance
+                silence_rms_threshold=config.whisper_silence_threshold,
+                silence_duration_ms=config.whisper_silence_ms,
+                min_segment_secs=config.whisper_min_secs,
+                max_segment_secs=config.whisper_max_secs,
+            )
+        else:
+            audio_sink = build_audio_sink(config.recall_audio_sink)
         recall_ws_handler = RecallWsHandler(
             cosmos_client=cosmos,
             on_utterance=_placeholder_on_utterance,
             audio_sink=audio_sink,
             webhook_secret=config.recall_webhook_secret,
             webhook_handler=recall_handler,
+            suppress_native_transcript=config.recall_audio_sink == "azure_openai_whisper",
         )
         logger.info(
             "RecallWsHandler 起動 (audio_sink=%s, events=%s)",
@@ -136,6 +156,8 @@ async def main() -> None:
     recall_handler.set_on_utterance(on_utterance)
     if recall_ws_handler is not None:
         recall_ws_handler.set_on_utterance(on_utterance)
+    if config.recall_audio_sink == "azure_openai_whisper" and audio_sink is not None:
+        audio_sink.set_on_utterance(on_utterance)
 
     # 9.b （deprecated）旧ルータ。Phase 6 で削除。
     # 二重保存防止のため transport=websocket のときはマウントしない。
