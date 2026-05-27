@@ -39,6 +39,12 @@ resource "azurerm_cosmosdb_sql_container" "utterances" {
       path = "/*"
     }
   }
+
+  # コスト最適化: manual 400 RU 固定よりアイドル時に最小 100 RU まで自動的に下がる
+  # autoscale を使う。idle で 5 コンテナ合計 ~$73/mo の削減 (2026-05-27)。
+  autoscale_settings {
+    max_throughput = 1000
+  }
 }
 
 resource "azurerm_cosmosdb_sql_container" "meetings" {
@@ -54,6 +60,12 @@ resource "azurerm_cosmosdb_sql_container" "meetings" {
     included_path {
       path = "/*"
     }
+  }
+
+  # コスト最適化: manual 400 RU 固定よりアイドル時に最小 100 RU まで自動的に下がる
+  # autoscale を使う。idle で 5 コンテナ合計 ~$73/mo の削減 (2026-05-27)。
+  autoscale_settings {
+    max_throughput = 1000
   }
 }
 
@@ -71,6 +83,12 @@ resource "azurerm_cosmosdb_sql_container" "clarification_sessions" {
       path = "/*"
     }
   }
+
+  # コスト最適化: manual 400 RU 固定よりアイドル時に最小 100 RU まで自動的に下がる
+  # autoscale を使う。idle で 5 コンテナ合計 ~$73/mo の削減 (2026-05-27)。
+  autoscale_settings {
+    max_throughput = 1000
+  }
 }
 
 resource "azurerm_cosmosdb_sql_container" "consents" {
@@ -87,6 +105,12 @@ resource "azurerm_cosmosdb_sql_container" "consents" {
       path = "/*"
     }
   }
+
+  # コスト最適化: manual 400 RU 固定よりアイドル時に最小 100 RU まで自動的に下がる
+  # autoscale を使う。idle で 5 コンテナ合計 ~$73/mo の削減 (2026-05-27)。
+  autoscale_settings {
+    max_throughput = 1000
+  }
 }
 
 resource "azurerm_cosmosdb_sql_container" "agent_logs" {
@@ -102,6 +126,12 @@ resource "azurerm_cosmosdb_sql_container" "agent_logs" {
     included_path {
       path = "/*"
     }
+  }
+
+  # コスト最適化: manual 400 RU 固定よりアイドル時に最小 100 RU まで自動的に下がる
+  # autoscale を使う。idle で 5 コンテナ合計 ~$73/mo の削減 (2026-05-27)。
+  autoscale_settings {
+    max_throughput = 1000
   }
 }
 
