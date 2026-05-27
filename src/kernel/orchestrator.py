@@ -81,6 +81,19 @@ class Orchestrator:
     def unregister_meeting(self, meeting_id: str) -> None:
         self._conversation_references.pop(meeting_id, None)
 
+    async def _resolve_ref(self, meeting_id: str) -> Optional[ConversationReference]:
+        ref = self._conversation_references.get(meeting_id)
+        if ref is not None:
+            return ref
+        if self._cosmos is None:
+            return None
+        meeting = await self._cosmos.get_meeting(meeting_id)
+        if not meeting or not meeting.get("conversation_reference"):
+            return None
+        ref = ConversationReference.deserialize(meeting["conversation_reference"])
+        self._conversation_references[meeting_id] = ref
+        return ref
+
     def register_speaker(self, speaker_id: str, ref: ConversationReference) -> None:
         self._speaker_references[speaker_id] = ref
 
@@ -144,8 +157,15 @@ class Orchestrator:
             search_results=search_results,
         )
 
-        ref = self._conversation_references.get(utterance.meeting_id)
+        ref = await self._resolve_ref(utterance.meeting_id)
         if ref is None:
+            import logging
+            logging.getLogger(__name__).warning(
+                "Orchestrator: no ConversationReference for meeting_id=%s — "
+                "cannot post to Teams chat. Start the meeting through Teams so the "
+                "bot receives the meetingStart event and registers a reference.",
+                utterance.meeting_id,
+            )
             return
 
         await self._poster.post(
@@ -177,6 +197,11 @@ class Orchestrator:
 
         speaker_ref = self._speaker_references.get(utterance.speaker_id)
         if speaker_ref is None:
+            import logging
+            logging.getLogger(__name__).warning(
+                "Orchestrator: no speaker ConversationReference for speaker_id=%s",
+                utterance.speaker_id,
+            )
             return
 
         # 発言者に 1:1 で確認メッセージを送る
@@ -224,7 +249,7 @@ class Orchestrator:
             reply=reply_text,
         )
 
-        ref = self._conversation_references.get(meeting_id)
+        ref = await self._resolve_ref(meeting_id)
         if ref is None:
             return
 

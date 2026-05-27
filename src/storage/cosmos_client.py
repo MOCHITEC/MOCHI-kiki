@@ -49,6 +49,12 @@ class CosmosClient:
         except Exception:
             return None
 
+    async def get_meeting(self, meeting_id: str) -> Optional[dict]:
+        try:
+            return await self._meetings.read_item(item=meeting_id, partition_key=meeting_id)
+        except Exception:
+            return None
+
     async def find_meeting_id_by_recall_bot_id(self, recall_bot_id: str) -> Optional[str]:
         """
         Recall bot.id から meeting_id を逆引きする。

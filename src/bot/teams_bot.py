@@ -92,8 +92,8 @@ class MeetingBot(ActivityHandler):
         await self._cosmos.save_meeting(meeting)
 
         if self._orchestrator:
-            from botbuilder.schema import ConversationReference
             ref = TurnContext.get_conversation_reference(turn_context.activity)
+            meeting.conversation_reference = ref.serialize()
             self._orchestrator.register_meeting(meeting.meeting_id, ref)
 
     async def _start_graph_subscription(self, meeting: Meeting, online_meeting_id: str) -> None:

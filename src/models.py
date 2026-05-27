@@ -49,6 +49,7 @@ class Meeting:
     transcript_subscription_id: Optional[str] = None
     recall_bot_id: Optional[str] = None
     transcript_source: str = "graph"  # "graph" | "recall" | "both"
+    conversation_reference: Optional[dict] = None
 
     def to_dict(self) -> dict:
         return {
@@ -60,4 +61,5 @@ class Meeting:
             "transcript_subscription_id": self.transcript_subscription_id,
             "recall_bot_id": self.recall_bot_id,
             "transcript_source": self.transcript_source,
+            "conversation_reference": self.conversation_reference,
         }
