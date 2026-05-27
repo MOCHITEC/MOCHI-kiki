@@ -1,13 +1,9 @@
 import io
-import math
 import struct
 import wave
 import pytest
 
-# helpers imported after they are implemented
-from src.transcript.audio_sink import _compute_rms, _pcm_to_wav
-
-_FRAME_BYTES = 640  # 20ms at 16kHz S16LE
+from src.transcript.audio_sink import _compute_rms, _pcm_to_wav, _FRAME_BYTES
 
 
 def _make_pcm(amplitude: int, n_samples: int = 320) -> bytes:
