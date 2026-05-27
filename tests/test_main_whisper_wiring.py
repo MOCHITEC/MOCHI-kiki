@@ -82,10 +82,12 @@ def _run_main_once(monkeypatch, extra_patches: dict) -> dict:
     MockMeetingBot.return_value._orchestrator = None
     MockOrchestrator = MagicMock(return_value=mock_orchestrator_instance)
     MockRecallRouter = MagicMock()
+    MockBuildSink = MagicMock(return_value=None)
 
     mocks["MockSink"] = MockSink
     mocks["MockHandler"] = MockHandler
     mocks["MockAsyncClient"] = MockAsyncClient
+    mocks["MockBuildSink"] = MockBuildSink
 
     with patch.object(main_mod, "CosmosClient", MockCosmos), \
          patch.object(main_mod, "RecallWebhookHandler", MockWebhookHandler), \
@@ -94,6 +96,7 @@ def _run_main_once(monkeypatch, extra_patches: dict) -> dict:
          patch.object(main_mod, "Orchestrator", MockOrchestrator), \
          patch.object(main_mod, "RecallWebhookRouter", MockRecallRouter), \
          patch.object(main_mod, "AsyncAzureOpenAI", MockAsyncClient), \
+         patch.object(main_mod, "build_audio_sink", MockBuildSink), \
          patch("src.transcript.audio_sink.WhisperAudioSink", MockSink), \
          patch.object(main_mod, "create_app_with_adapter", return_value=(mock_app, mock_adapter)), \
          patch("aiohttp.web.AppRunner", return_value=mock_runner), \
@@ -134,6 +137,11 @@ def test_whisper_sink_constructed_when_env_set(monkeypatch):
     init_kwargs = MockSink.call_args.kwargs
     assert init_kwargs.get("openai_client") is mock_async_client_instance
     assert init_kwargs.get("whisper_deployment") == "whisper"
+    call_kwargs = MockSink.call_args.kwargs
+    assert call_kwargs["silence_rms_threshold"] == 300
+    assert call_kwargs["silence_duration_ms"] == 600
+    assert call_kwargs["min_segment_secs"] == 1.0
+    assert call_kwargs["max_segment_secs"] == 30.0
 
     # RecallWsHandler should have been called with suppress_native_transcript=True
     MockHandler.assert_called_once()
@@ -154,9 +162,13 @@ def test_default_sink_no_suppress(monkeypatch):
 
     MockSink = mocks["MockSink"]
     MockHandler = mocks["MockHandler"]
+    MockBuildSink = mocks["MockBuildSink"]
 
     # WhisperAudioSink should NOT have been constructed
     MockSink.assert_not_called()
+
+    # build_audio_sink should have been called for the noop path
+    MockBuildSink.assert_called_once()
 
     # RecallWsHandler should have been called with suppress_native_transcript=False
     MockHandler.assert_called_once()
