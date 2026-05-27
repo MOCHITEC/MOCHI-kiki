@@ -7,7 +7,7 @@ from typing import Optional
 _ALLOWED_RECALL_REGIONS = {"us-east-1", "us-west-2", "eu-central-1", "ap-northeast-1"}
 
 _ALLOWED_TRANSPORTS = {"webhook", "websocket", "both"}
-_ALLOWED_AUDIO_SINKS = {"noop", "file", "azure_speech"}
+_ALLOWED_AUDIO_SINKS = {"noop", "file", "azure_speech", "azure_openai_whisper"}
 
 
 class Config:
@@ -36,6 +36,11 @@ class Config:
     recall_transport: str  # "webhook" | "websocket" | "both"
     recall_ws_public_url: Optional[str]
     recall_audio_sink: str
+    whisper_deployment: str
+    whisper_silence_threshold: int
+    whisper_silence_ms: int
+    whisper_min_secs: float
+    whisper_max_secs: float
 
     def __init__(self) -> None:
         self.microsoft_app_id = os.environ["MICROSOFT_APP_ID"]
@@ -101,6 +106,12 @@ class Config:
                 f"RECALL_AUDIO_SINK は {sorted(_ALLOWED_AUDIO_SINKS)} のいずれか (got: {sink!r})"
             )
         self.recall_audio_sink = sink
+
+        self.whisper_deployment = os.environ.get("RECALL_WHISPER_DEPLOYMENT", "whisper").strip() or "whisper"
+        self.whisper_silence_threshold = int(os.environ.get("RECALL_WHISPER_SILENCE_THRESHOLD", "300"))
+        self.whisper_silence_ms = int(os.environ.get("RECALL_WHISPER_SILENCE_MS", "600"))
+        self.whisper_min_secs = float(os.environ.get("RECALL_WHISPER_MIN_SECS", "1.0"))
+        self.whisper_max_secs = float(os.environ.get("RECALL_WHISPER_MAX_SECS", "30.0"))
 
         # recall を使うなら必要 env が揃っているか fail-fast
         if self.transcript_source in {"recall", "both"}:
