@@ -164,7 +164,10 @@ def main() -> None:
     print(f"  Cosmos DB    : {cosmos_db}")
     print(SEP)
     print()
-    input("Send bot to meeting? Press Enter to continue (Ctrl-C to cancel) ... ")
+    if sys.stdin.isatty():
+        input("Send bot to meeting? Press Enter to continue (Ctrl-C to cancel) ... ")
+    else:
+        print("(non-interactive mode -- proceeding automatically)")
 
     # 1. Create bot
     print("::: 1. Creating Recall bot...")
