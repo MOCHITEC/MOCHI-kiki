@@ -4,7 +4,8 @@ import logging
 from datetime import datetime, timezone
 from typing import Callable, Awaitable, Optional
 
-from botbuilder.core import ActivityHandler, TurnContext
+from botbuilder.core import TurnContext
+from botbuilder.core.teams import TeamsActivityHandler
 from botbuilder.schema import Activity
 
 from src.models import Meeting, Utterance
@@ -18,7 +19,7 @@ logger = logging.getLogger(__name__)
 _VALID_TRANSCRIPT_SOURCES = {"graph", "recall", "both"}
 
 
-class MeetingBot(ActivityHandler):
+class MeetingBot(TeamsActivityHandler):
     def __init__(
         self,
         cosmos_client: CosmosClient,
