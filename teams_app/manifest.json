@@ -1,0 +1,57 @@
+{
+  "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.17/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.17",
+  "version": "1.0.0",
+  "id": "c831aad8-5160-4b2b-aaf5-24534a1e0d1a",
+  "developer": {
+    "name": "Mochitec Co., Ltd.",
+    "websiteUrl": "https://www.mochitec.co.jp/",
+    "privacyUrl": "https://www.mochitec.co.jp/privacy",
+    "termsOfUseUrl": "https://www.mochitec.co.jp/terms"
+  },
+  "name": {
+    "short": "MOCHI-kiki",
+    "full": "MOCHI-kiki Meeting Assistant"
+  },
+  "description": {
+    "short": "Auto-answers spec questions in meetings",
+    "full": "Detects spec inquiries and ambiguous statements during Teams meetings and responds automatically using RAG."
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "accentColor": "#0078D4",
+  "bots": [
+    {
+      "botId": "c831aad8-5160-4b2b-aaf5-24534a1e0d1a",
+      "scopes": ["team", "groupChat"],
+      "supportsFiles": false,
+      "isNotificationOnly": false
+    }
+  ],
+  "configurableTabs": [],
+  "staticTabs": [],
+  "permissions": ["identity", "messageTeamMembers"],
+  "validDomains": [
+    "mochikiki-bot-dev--0000001.orangeglacier-d7a5339f.japaneast.azurecontainerapps.io"
+  ],
+  "webApplicationInfo": {
+    "id": "c831aad8-5160-4b2b-aaf5-24534a1e0d1a",
+    "resource": "https://graph.microsoft.com"
+  },
+  "authorization": {
+    "permissions": {
+      "resourceSpecific": [
+        {
+          "name": "OnlineMeeting.ReadBasic.Chat",
+          "type": "Application"
+        },
+        {
+          "name": "ChannelMessage.Read.Group",
+          "type": "Application"
+        }
+      ]
+    }
+  }
+}
