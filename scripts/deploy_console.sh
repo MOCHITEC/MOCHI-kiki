@@ -156,8 +156,9 @@ else
   echo ""
   echo "=== 4. Docker build + ACR push ==="
   run "az acr login --name \"$ACR_NAME\""
-  run "docker build -t \"$FULL_IMAGE\" ."
-  run "docker push \"$FULL_IMAGE\""
+  # Container App は linux/amd64 を要求。Apple Silicon でも明示してビルド。
+  run "docker buildx build --platform linux/amd64 --provenance=false -t \"$FULL_IMAGE\" --push ."
+  # buildx --push でアップロード済みなので docker push は不要
   echo "  ✓ push: ${FULL_IMAGE}"
 fi
 
@@ -194,15 +195,18 @@ echo "  Container App URL: ${URL}"
 
 if (( ! DRY_RUN )); then
   echo "  /api/console/auth/me に curl..."
-  for i in 1 2 3 4 5 6; do
-    code=$(curl -s -o /dev/null -w "%{http_code}" "${URL}/api/console/auth/me" || true)
+  smoke_ok=0
+  for i in 1 2 3 4 5 6 7 8; do
+    code="$(curl -s -o /dev/null -w "%{http_code}" "${URL}/api/console/auth/me" 2>/dev/null || echo "000")"
     if [[ "$code" == "401" ]]; then
       echo "  ✓ 401 unauthorized (=ルート有効)"
+      smoke_ok=1
       break
     fi
-    echo "  ...$i 回目 HTTP $code、10 秒待って再試行"
-    sleep 10
+    echo "  ...$i 回目 HTTP $code、15 秒待って再試行"
+    sleep 15
   done
+  (( smoke_ok )) || echo "  ⚠ スモークテスト未通過。Container App ログを確認してください"
 fi
 
 # ===== 7. frontend 設定指示 =====

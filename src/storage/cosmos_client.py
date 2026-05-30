@@ -100,7 +100,7 @@ class CosmosClient:
             params = [{"name": "@limit", "value": limit}]
         items: list[dict] = []
         iterator = self._meetings.query_items(
-            query=query, parameters=params, enable_cross_partition_query=True
+            query=query, parameters=params
         )
         async for item in iterator:
             items.append(item)
@@ -139,7 +139,7 @@ class CosmosClient:
         params = [{"name": "@bot_id", "value": recall_bot_id}]
         try:
             iterator = self._meetings.query_items(
-                query=query, parameters=params, enable_cross_partition_query=True
+                query=query, parameters=params
             )
             async for item in iterator:
                 mid = item.get("id")
