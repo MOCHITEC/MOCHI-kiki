@@ -16,6 +16,7 @@ from src.kernel.orchestrator import Orchestrator
 from src.models import Utterance
 from src.api.recall_router import RecallWebhookRouter
 from src.api.console_router import build_console_router_from_env
+from src.api.static_router import register_static_router
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -157,6 +158,9 @@ async def main() -> None:
             "管理コンソール /api/console/* 有効化 (recall=%s)",
             "yes" if recall_client is not None else "no",
         )
+
+    # 9.d frontend static 配信 (Next.js export が同梱されていれば)
+    register_static_router(app)
 
     runner = web.AppRunner(app)
     await runner.setup()

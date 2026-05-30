@@ -69,7 +69,7 @@ export default function NewBotPage() {
         `Bot を投入しました (bot_id: ${res.bot_id} / meeting_id: ${res.meeting_id})`,
       );
       setConfirmOpen(false);
-      router.push(`/meetings/${encodeURIComponent(res.meeting_id)}`);
+      router.push(`/meeting?id=${encodeURIComponent(res.meeting_id)}`);
     },
     onError: (err) => {
       const msg =

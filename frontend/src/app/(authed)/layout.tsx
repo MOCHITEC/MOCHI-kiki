@@ -1,4 +1,5 @@
 import { Nav } from "@/components/Nav";
+import { AuthGuard } from "@/components/AuthGuard";
 
 export default function AuthedLayout({
   children,
@@ -6,11 +7,13 @@ export default function AuthedLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen flex-col">
-      <Nav />
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
-        {children}
-      </main>
-    </div>
+    <AuthGuard>
+      <div className="flex min-h-screen flex-col">
+        <Nav />
+        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
+          {children}
+        </main>
+      </div>
+    </AuthGuard>
   );
 }

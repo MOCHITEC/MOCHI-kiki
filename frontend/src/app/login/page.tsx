@@ -1,10 +1,11 @@
 "use client";
 
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { api, ApiError } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,18 @@ type FormValues = z.infer<typeof schema>;
 
 export default function LoginPage() {
   const router = useRouter();
+  const me = useQuery({
+    queryKey: ["me"],
+    queryFn: () => api.me(),
+    retry: false,
+  });
+
+  useEffect(() => {
+    if (me.data) {
+      router.replace("/meetings");
+    }
+  }, [me.data, router]);
+
   const {
     register,
     handleSubmit,

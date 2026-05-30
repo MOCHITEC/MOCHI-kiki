@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { use } from "react";
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Download, ArrowLeft } from "lucide-react";
@@ -18,24 +19,23 @@ import {
 } from "@/components/ui/dialog";
 import { formatDateTime } from "@/lib/utils";
 
-interface PageProps {
-  params: Promise<{ meetingId: string }>;
-}
-
-export default function MeetingDetailPage({ params }: PageProps) {
-  const { meetingId } = use(params);
+function MeetingDetailInner() {
+  const sp = useSearchParams();
+  const meetingId = sp.get("id") ?? "";
   const qc = useQueryClient();
 
   const meetingQuery = useQuery({
     queryKey: ["meeting", meetingId],
     queryFn: () => api.getMeeting(meetingId),
     refetchInterval: 5000,
+    enabled: !!meetingId,
   });
 
   const utterancesQuery = useQuery({
     queryKey: ["utterances", meetingId],
     queryFn: () => api.listUtterances(meetingId, { limit: 1000 }),
     refetchInterval: 5000,
+    enabled: !!meetingId,
   });
 
   const [confirmLeave, setConfirmLeave] = React.useState(false);
@@ -53,6 +53,14 @@ export default function MeetingDetailPage({ params }: PageProps) {
       toast.error(msg);
     },
   });
+
+  if (!meetingId) {
+    return (
+      <div className="rounded-lg border border-zinc-200 bg-white p-8 text-center text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950">
+        meeting_id を指定してください
+      </div>
+    );
+  }
 
   const meeting = meetingQuery.data;
   const utterances = utterancesQuery.data?.utterances ?? [];
@@ -206,5 +214,13 @@ export default function MeetingDetailPage({ params }: PageProps) {
         </DialogFooter>
       </Dialog>
     </div>
+  );
+}
+
+export default function MeetingDetailPage() {
+  return (
+    <Suspense fallback={<div className="py-8 text-center text-sm text-zinc-500">読み込み中...</div>}>
+      <MeetingDetailInner />
+    </Suspense>
   );
 }

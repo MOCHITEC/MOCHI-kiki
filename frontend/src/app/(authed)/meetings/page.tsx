@@ -94,7 +94,7 @@ export default function MeetingsPage() {
                     <tr key={m.meeting_id}>
                       <td className="max-w-[12rem] truncate px-4 py-3 font-mono text-xs">
                         <Link
-                          href={`/meetings/${encodeURIComponent(m.meeting_id)}`}
+                          href={`/meeting?id=${encodeURIComponent(m.meeting_id)}`}
                           className="hover:underline"
                         >
                           {m.meeting_id}
@@ -122,7 +122,7 @@ export default function MeetingsPage() {
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <Link
-                            href={`/meetings/${encodeURIComponent(m.meeting_id)}`}
+                            href={`/meeting?id=${encodeURIComponent(m.meeting_id)}`}
                           >
                             <Button variant="outline" size="sm">
                               詳細
