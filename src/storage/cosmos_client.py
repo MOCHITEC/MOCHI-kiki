@@ -77,5 +77,136 @@ class CosmosClient:
             return None
         return None
 
+    async def list_meetings_for_console(
+        self, *, limit: int = 50, before: Optional[str] = None
+    ) -> list[dict]:
+        """started_at DESC で meetings を返す。before があれば started_at < before。"""
+        limit = max(1, min(limit, 200))
+        if before:
+            query = (
+                "SELECT * FROM c WHERE IS_DEFINED(c.started_at) "
+                "AND c.started_at < @before "
+                "ORDER BY c.started_at DESC OFFSET 0 LIMIT @limit"
+            )
+            params = [
+                {"name": "@before", "value": before},
+                {"name": "@limit", "value": limit},
+            ]
+        else:
+            query = (
+                "SELECT * FROM c WHERE IS_DEFINED(c.started_at) "
+                "ORDER BY c.started_at DESC OFFSET 0 LIMIT @limit"
+            )
+            params = [{"name": "@limit", "value": limit}]
+        items: list[dict] = []
+        iterator = self._meetings.query_items(
+            query=query, parameters=params, enable_cross_partition_query=True
+        )
+        async for item in iterator:
+            items.append(item)
+        return items
+
+    async def get_meeting_for_console(self, meeting_id: str) -> Optional[dict]:
+        if not meeting_id:
+            return None
+        try:
+            return await self._meetings.read_item(
+                item=meeting_id, partition_key=meeting_id
+            )
+        except Exception:
+            return None
+
+    async def update_meeting_ended_at(
+        self, meeting_id: str, ended_at_iso: str
+    ) -> bool:
+        item = await self.get_meeting_for_console(meeting_id)
+        if not item:
+            return False
+        item["ended_at"] = ended_at_iso
+        await self._meetings.upsert_item(item)
+        return True
+
+    async def find_meeting_id_by_recall_bot_id_any(
+        self, recall_bot_id: str
+    ) -> Optional[str]:
+        """ended_at の有無に関わらず meeting_id を返す (退出処理用)。"""
+        if not recall_bot_id:
+            return None
+        query = (
+            "SELECT TOP 1 c.id FROM c WHERE c.recall_bot_id = @bot_id "
+            "ORDER BY c.started_at DESC"
+        )
+        params = [{"name": "@bot_id", "value": recall_bot_id}]
+        try:
+            iterator = self._meetings.query_items(
+                query=query, parameters=params, enable_cross_partition_query=True
+            )
+            async for item in iterator:
+                mid = item.get("id")
+                if isinstance(mid, str) and mid:
+                    return mid
+        except Exception:
+            return None
+        return None
+
+    async def list_utterances_for_meeting(
+        self,
+        meeting_id: str,
+        *,
+        since: Optional[str] = None,
+        limit: int = 500,
+    ) -> list[dict]:
+        """timestamp ASC で utterances を返す。since があれば timestamp > since。"""
+        if not meeting_id:
+            return []
+        limit = max(1, min(limit, 5000))
+        if since:
+            query = (
+                "SELECT * FROM c WHERE c.meeting_id = @mid "
+                "AND c.timestamp > @since "
+                "ORDER BY c.timestamp ASC OFFSET 0 LIMIT @limit"
+            )
+            params = [
+                {"name": "@mid", "value": meeting_id},
+                {"name": "@since", "value": since},
+                {"name": "@limit", "value": limit},
+            ]
+        else:
+            query = (
+                "SELECT * FROM c WHERE c.meeting_id = @mid "
+                "ORDER BY c.timestamp ASC OFFSET 0 LIMIT @limit"
+            )
+            params = [
+                {"name": "@mid", "value": meeting_id},
+                {"name": "@limit", "value": limit},
+            ]
+        items: list[dict] = []
+        iterator = self._utterances.query_items(
+            query=query, parameters=params, partition_key=meeting_id
+        )
+        async for item in iterator:
+            items.append(item)
+        return items
+
+    async def count_utterances_for_meeting(self, meeting_id: str) -> int:
+        if not meeting_id:
+            return 0
+        query = "SELECT VALUE COUNT(1) FROM c WHERE c.meeting_id = @mid"
+        params = [{"name": "@mid", "value": meeting_id}]
+        try:
+            iterator = self._utterances.query_items(
+                query=query, parameters=params, partition_key=meeting_id
+            )
+            async for item in iterator:
+                if isinstance(item, int):
+                    return item
+                if isinstance(item, dict):
+                    for v in item.values():
+                        if isinstance(v, int):
+                            return v
+        except Exception:
+            return 0
+        return 0
+
     async def close(self) -> None:
         await self._azure_client.close()

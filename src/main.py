@@ -15,6 +15,7 @@ from src.bot.app import create_app_with_adapter
 from src.kernel.orchestrator import Orchestrator
 from src.models import Utterance
 from src.api.recall_router import RecallWebhookRouter
+from src.api.console_router import build_console_router_from_env
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -141,6 +142,21 @@ async def main() -> None:
     # 二重保存防止のため transport=websocket のときはマウントしない。
     if config.recall_transport in ("webhook", "both"):
         RecallWebhookRouter(orchestrator=orchestrator, cosmos=cosmos).register(app)
+
+    # 9.c 管理コンソール (frontend-bot-console) 用ルータ
+    if config.console_enabled:
+        console = build_console_router_from_env(
+            cosmos=cosmos,
+            recall_client=recall_client,
+            username=config.console_username,  # type: ignore[arg-type]
+            password_hash=config.console_password_hash,  # type: ignore[arg-type]
+            jwt_secret=config.console_jwt_secret,  # type: ignore[arg-type]
+        )
+        console.register(app)
+        logger.info(
+            "管理コンソール /api/console/* 有効化 (recall=%s)",
+            "yes" if recall_client is not None else "no",
+        )
 
     runner = web.AppRunner(app)
     await runner.setup()

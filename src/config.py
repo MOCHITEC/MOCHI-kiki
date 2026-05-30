@@ -36,6 +36,11 @@ class Config:
     recall_transport: str  # "webhook" | "websocket" | "both"
     recall_ws_public_url: Optional[str]
     recall_audio_sink: str
+    # MOCHI-kiki 管理コンソール (frontend) 用
+    console_enabled: bool
+    console_username: Optional[str]
+    console_password_hash: Optional[str]
+    console_jwt_secret: Optional[str]
 
     def __init__(self) -> None:
         self.microsoft_app_id = os.environ["MICROSOFT_APP_ID"]
@@ -121,3 +126,30 @@ class Config:
                 raise RuntimeError("RECALL_WEBHOOK_PUBLIC_URL は HTTPS でなければならない")
             if self.recall_ws_public_url and not self.recall_ws_public_url.startswith("wss://"):
                 raise RuntimeError("RECALL_WS_PUBLIC_URL は wss:// でなければならない")
+
+        # ---- 管理コンソール (frontend-bot-console) ----
+        self.console_enabled = (
+            os.environ.get("CONSOLE_ENABLED", "false").strip().lower() == "true"
+        )
+        self.console_username = (
+            os.environ.get("CONSOLE_USERNAME", "").strip() or None
+        )
+        self.console_password_hash = (
+            os.environ.get("CONSOLE_PASSWORD_HASH", "").strip() or None
+        )
+        self.console_jwt_secret = (
+            os.environ.get("CONSOLE_JWT_SECRET", "").strip() or None
+        )
+        if self.console_enabled:
+            missing = [
+                name for name, val in (
+                    ("CONSOLE_USERNAME", self.console_username),
+                    ("CONSOLE_PASSWORD_HASH", self.console_password_hash),
+                    ("CONSOLE_JWT_SECRET", self.console_jwt_secret),
+                )
+                if not val
+            ]
+            if missing:
+                raise RuntimeError(
+                    "CONSOLE_ENABLED=true には次の env が必要: " + ", ".join(missing)
+                )
