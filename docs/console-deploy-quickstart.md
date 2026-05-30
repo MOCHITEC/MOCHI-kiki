@@ -114,6 +114,23 @@ pip install bcrypt
 - Cookie が保存されていない可能性。Container App の URL は HTTPS なので `CONSOLE_COOKIE_SECURE=true` で OK のはず。
 - ブラウザの devtools で Set-Cookie ヘッダを確認 (`mochi_session=...; Secure; HttpOnly; SameSite=Strict`)。
 
+### Bot 投入で 502 `recall_api_error` が返る
+
+Container App ログに `POST https://<region>.recall.ai/api/v1/bot/ failed status=401` が出ているなら、Container App の `RECALL_REGION` と Recall.ai dashboard で発行した API key の region が一致していない可能性が高いです (key は region 別)。
+
+```bash
+# 1. .env と Container App env を比較
+grep '^RECALL_REGION=' .env
+az containerapp show -n mochikiki-bot-dev -g rg-mochi-kiki \
+  --query "properties.template.containers[0].env[?name=='RECALL_REGION'].value" -o tsv
+
+# 2. ズレていたら Container App 側を .env に合わせる (例: us-west-2)
+az containerapp update -n mochikiki-bot-dev -g rg-mochi-kiki \
+  --set-env-vars "RECALL_REGION=us-west-2"
+```
+
+`status=400` なら meeting_url が Recall.ai 側で不正と判定 (Teams 会議が既に終了している / URL 形式違反 / dummy URL 等)。本物の Teams 会議 URL を使ってください。
+
 ### Cosmos の meetings が空
 - 過去の bot 投入 (例: `scripts/test_recall_ws.sh` 経由) の record はそのまま見えるはず。
 - 新規 console 経由の投入は `id=console-<unix_ts>-<rand4>` 形式。
