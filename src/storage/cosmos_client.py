@@ -66,7 +66,6 @@ class CosmosClient:
             iterator = self._meetings.query_items(
                 query=query,
                 parameters=params,
-                enable_cross_partition_query=True,
             )
             async for item in iterator:
                 meeting_id = item.get("id")
