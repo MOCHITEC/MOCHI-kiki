@@ -131,6 +131,32 @@ az containerapp update -n mochikiki-bot-dev -g rg-mochi-kiki \
 
 `status=400` なら meeting_url が Recall.ai 側で不正と判定 (Teams 会議が既に終了している / URL 形式違反 / dummy URL 等)。本物の Teams 会議 URL を使ってください。
 
+### Bot は会議に入るが文字起こしが流れてこない
+
+Cosmos の `meetings.recall_bot_id` を取って、Recall.ai に bot 設定を聞く:
+
+```bash
+RECALL_KEY=$(grep '^RECALL_API_KEY=' .env | head -1 | sed 's/^RECALL_API_KEY=//')
+REGION=$(grep '^RECALL_REGION=' .env | head -1 | sed 's/^RECALL_REGION=//')
+curl -s -H "Authorization: Token $RECALL_KEY" \
+  "https://${REGION}.recall.ai/api/v1/bot/<recall_bot_id>" | jq '.recording_config.realtime_endpoints'
+```
+
+`url` に **revision suffix (`--0000001` など)** が含まれていたら、その revision はもう存在しないので transcript の送り先が DNS 404。
+
+```bash
+# 安定 URL (revision suffix 無し) に更新
+BASE="mochikiki-bot-dev.<orangeglacier-d7a5339f>.japaneast.azurecontainerapps.io"
+az containerapp secret set -n mochikiki-bot-dev -g rg-mochi-kiki \
+  --secrets "recall-ws-public-url=wss://${BASE}/api/recall/ws"
+az containerapp update -n mochikiki-bot-dev -g rg-mochi-kiki \
+  --set-env-vars "RECALL_WEBHOOK_PUBLIC_URL=https://${BASE}/api/recall/webhook"
+```
+
+その後、**古い bot は古い URL のまま動くので退出させて新規投入** が必要。
+管理コンソール `/meetings` の「退出させる」ボタン or
+`curl -X POST <URL>/api/console/bots/<recall_bot_id>/leave`。
+
 ### Cosmos の meetings が空
 - 過去の bot 投入 (例: `scripts/test_recall_ws.sh` 経由) の record はそのまま見えるはず。
 - 新規 console 経由の投入は `id=console-<unix_ts>-<rand4>` 形式。
