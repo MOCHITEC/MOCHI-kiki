@@ -1,0 +1,47 @@
+{
+  "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.17/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.17",
+  "version": "1.0.0",
+  "id": "3c478673-d16a-4be8-af89-13dfc5b5c2a3",
+  "packageName": "co.jp.mochitec.mochikiki",
+  "developer": {
+    "name": "MOCHITEC",
+    "websiteUrl": "https://mochitec.co.jp",
+    "privacyUrl": "https://mochitec.co.jp/privacy",
+    "termsOfUseUrl": "https://mochitec.co.jp/terms"
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "name": {
+    "short": "MOCHI-kiki",
+    "full": "MOCHI-kiki 会議サポートエージェント"
+  },
+  "description": {
+    "short": "Teams 会議の発話を AI 解析し、議論をサポートする",
+    "full": "MOCHI-kiki は Teams 会議の発話を自動で文字起こしし、AI で意図を解析、関連情報を検索して会議チャットに回答を投稿する会議サポートエージェントです。"
+  },
+  "accentColor": "#FFA94D",
+  "bots": [
+    {
+      "botId": "c831aad8-5160-4b2b-aaf5-24534a1e0d1a",
+      "scopes": [
+        "team",
+        "personal",
+        "groupChat"
+      ],
+      "supportsFiles": false,
+      "isNotificationOnly": false,
+      "supportsCalling": false,
+      "supportsVideo": false
+    }
+  ],
+  "permissions": [
+    "identity",
+    "messageTeamMembers"
+  ],
+  "validDomains": [
+    "mochikiki-bot-dev.orangeglacier-d7a5339f.japaneast.azurecontainerapps.io"
+  ]
+}
