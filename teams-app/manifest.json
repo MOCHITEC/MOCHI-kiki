@@ -1,7 +1,7 @@
 {
   "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.17/MicrosoftTeams.schema.json",
   "manifestVersion": "1.17",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "id": "3c478673-d16a-4be8-af89-13dfc5b5c2a3",
   "packageName": "co.jp.mochitec.mochikiki",
   "developer": {
@@ -43,5 +43,31 @@
   ],
   "validDomains": [
     "mochikiki-bot-dev.orangeglacier-d7a5339f.japaneast.azurecontainerapps.io"
-  ]
+  ],
+  "webApplicationInfo": {
+    "id": "c831aad8-5160-4b2b-aaf5-24534a1e0d1a",
+    "resource": "https://RscPermission"
+  },
+  "authorization": {
+    "permissions": {
+      "resourceSpecific": [
+        {
+          "name": "OnlineMeeting.ReadBasic.Chat",
+          "type": "Application"
+        },
+        {
+          "name": "ChannelMeeting.ReadBasic.Group",
+          "type": "Application"
+        },
+        {
+          "name": "OnlineMeetingParticipant.Read.Chat",
+          "type": "Application"
+        },
+        {
+          "name": "ChatMessage.Send.Chat",
+          "type": "Application"
+        }
+      ]
+    }
+  }
 }
