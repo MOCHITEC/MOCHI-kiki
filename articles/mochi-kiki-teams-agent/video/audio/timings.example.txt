@@ -1,0 +1,24 @@
+# 手動タイミングテンプレート — 無音検出が失敗した場合の代替
+#
+# 使い方:
+#   1. このファイルを timings.txt にリネーム
+#   2. 各行 1 つの数値 (秒) を書く。1 行目 = Slide 1 開始秒 (常に 0)、
+#      2 行目 = Slide 2 開始秒、... 計 14 行 (スライド数と一致させる)
+#   3. python scripts/assemble_demo_video.py を実行
+#
+# 例: narration.m4a 内で各スライドが下記の秒数に開始する場合
+#
+# 0       # Slide 1
+# 15.0    # Slide 2
+# 30.0    # Slide 3
+# 45.0    # Slide 4
+# 70.0    # Slide 5
+# 85.0    # Slide 6
+# 90.0    # Slide 7  (Demo A)
+# 130.0   # Slide 8
+# 145.0   # Slide 9  (Demo B 議事録)
+# 155.0   # Slide 10 (Demo B タイムライン)
+# 163.0   # Slide 11 (Demo B 文字起こし)
+# 170.0   # Slide 12 (Known Issue)
+# 185.0   # Slide 13 (Stack)
+# 190.0   # Slide 14 (End Card)
