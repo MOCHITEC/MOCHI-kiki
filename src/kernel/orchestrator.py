@@ -14,6 +14,7 @@ from src.plugins.intent_analysis import IntentAnalysisPlugin, IntentLabel
 from src.plugins.rag_search import RAGSearchPlugin
 from src.plugins.answer_generation import AnswerGenerationPlugin
 from src.plugins.chat_poster import ChatPosterPlugin
+from src.plugins.recall_chat_poster import RecallChatPosterPlugin
 
 
 class Orchestrator:
@@ -60,6 +61,8 @@ class Orchestrator:
         self._rag = RAGSearchPlugin(search_client, openai_client, embedding_deployment)
         self._answer = AnswerGenerationPlugin(kernel)
         self._poster = ChatPosterPlugin(adapter, app_id)
+        # Recall.ai 経由でチャット投稿する poster は set_recall_chat_poster で後注入
+        self._recall_poster: Optional[RecallChatPosterPlugin] = None
         self._conversation_references: Dict[str, ConversationReference] = {}
         self._speaker_references: Dict[str, ConversationReference] = {}
         self._pending_sessions: Dict[str, str] = {}
@@ -74,6 +77,12 @@ class Orchestrator:
     def set_cosmos(self, cosmos) -> None:
         """C-03 で Cosmos DB に ClarificationSession を保存するために注入する。"""
         self._cosmos = cosmos
+
+    def set_recall_chat_poster(self, poster: RecallChatPosterPlugin) -> None:
+        """Recall.ai 経由でチャット投稿する poster を注入。
+        Bot Framework adapter 経由 (会議に Teams App install 必要) ではなく、
+        Recall.ai の send_chat_message API を使う。"""
+        self._recall_poster = poster
 
     def register_meeting(self, meeting_id: str, ref: ConversationReference) -> None:
         self._conversation_references[meeting_id] = ref
@@ -144,13 +153,23 @@ class Orchestrator:
             search_results=search_results,
         )
 
+        text = f"**[仕様補完]** {answer}"
+
+        # 優先: Recall.ai 経由でチャット投稿 (会議に Teams App install 不要)
+        if self._recall_poster is not None:
+            ok = await self._recall_poster.post(utterance.meeting_id, text)
+            if ok:
+                return
+            # 失敗時は Bot Framework フォールバックに進む
+
+        # フォールバック: Bot Framework 経由 (要 conversation_reference)
         ref = self._conversation_references.get(utterance.meeting_id)
         if ref is None:
             return
 
         await self._poster.post(
             conversation_reference=ref,
-            text=f"**[仕様補完]** {answer}",
+            text=text,
         )
 
     async def _handle_ambiguous(self, utterance: Utterance) -> None:
@@ -175,11 +194,26 @@ class Orchestrator:
 
         self._pending_sessions[utterance.speaker_id] = session.session_id
 
+        # 発言者に 1:1 で確認メッセージを送る予定だが、Bot Framework 経由は
+        # 会議への app install + speaker_ref 必須。Recall.ai 経由なら
+        # 会議のチャットに「@<発言者> に確認」と全体投稿で代用する。
+        message_to_chat = (
+            f"**[確認]** @{utterance.speaker_name} さん、{ambiguity.question}\n"
+            f"（発言「{utterance.text[:100]}」に関する確認です）"
+        )
+
+        # 優先: Recall.ai 経由で会議チャットに確認質問を投げる
+        if self._recall_poster is not None:
+            ok = await self._recall_poster.post(
+                utterance.meeting_id, message_to_chat
+            )
+            if ok:
+                return
+
+        # フォールバック: Bot Framework 経由で speaker に 1:1 確認
         speaker_ref = self._speaker_references.get(utterance.speaker_id)
         if speaker_ref is None:
             return
-
-        # 発言者に 1:1 で確認メッセージを送る
         message = (
             f"確認させてください: {ambiguity.question}\n"
             f"（会議での発言「{utterance.text}」に関して）"
