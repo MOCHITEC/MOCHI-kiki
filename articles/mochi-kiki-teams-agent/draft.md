@@ -156,25 +156,9 @@ ANSWER_PROMPT = """
 
 仕様補完の投稿が**会議中の会話に間に合わない**のが、MVP の最大の弱点です。
 
-定量的な計測 (p50 / p95) は今後の課題ですが、構造的に積み上がる遅延の内訳は次の見込みです。
+主な原因は文字起こし (STT) の遅延です。Recall.ai の日本語は精度モード固定で、発話塊が一区切りつくまで貯めてから結果を返すため、STT だけで十数秒〜数十秒かかります。結果として、発話から投稿まで「会議の流れに **後追いで補足** を入れる」体感になります。
 
-| 段 | 内訳 | 見込み時間 |
-|----|------|----------|
-| STT | Recall.ai 精度モード (発話塊の区切りまで貯めて返す) | 十数秒〜数十秒 |
-| LLM 1 | IntentAnalysis (GPT-4o) | 1〜3 秒 |
-| RAG | Azure AI Search ハイブリッド検索 | 1 秒以内 |
-| LLM 2 | AnswerGeneration (GPT-4o) | 1〜3 秒 |
-| 投稿 | Bot Framework の自発投稿 (proactive メッセージ) | 1 秒以内 |
-
-主な原因は STT 段です。Recall.ai の `recallai_streaming` プロバイダのうち低レイテンシモード (`prioritize_low_latency`) は **英語専用**。日本語は `prioritize_accuracy` モード固定です。
-
-```text
-language_code other than english is not supported in low latency mode
-```
-
-精度モードは「会議の発話塊が一区切りつくまで貯めてから STT 結果を返す」挙動なので、STT だけで十数秒〜数十秒の遅延が乗ります。発話から投稿まで「会議の流れに **後追いで補足** を入れる」体感になります。
-
-これを縮めるには、Recall.ai を諦めて別経路の STT に置き換える必要があります。例えば Azure AI Speech の低遅延 STT を自前 WebSocket で受ける、Deepgram のような低遅延 STT に切り替える、などです。
+縮めるには Recall.ai を諦めて低遅延な STT に置き換える必要があり、ここは本番投入前の課題として残っています。
 
 「Recall.ai だけで現実的に Teams 音声が取れる」ことと「議論を止めずに即答できる」ことは両立しない、というのが MVP で得た一番大きな学びです。
 
