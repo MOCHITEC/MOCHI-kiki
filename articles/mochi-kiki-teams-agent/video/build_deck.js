@@ -49,7 +49,7 @@ function addEyebrow(slide, text, color = COLOR.oceanDeep) {
   });
 }
 
-const TOTAL = 12;
+const TOTAL = 14;
 
 /* Slide 1: タイトル */
 {
@@ -407,43 +407,41 @@ const TOTAL = 12;
   );
 }
 
-/* Slide 7: 画面録画 A スロット */
+/* Slide 7: Demo A 実画面 (Teams 会議チャット) */
 {
   const s = pres.addSlide();
-  s.background = { color: "0A0A0A" };
+  s.background = { color: COLOR.paper };
+  addEyebrow(s, "DEMO A");
 
-  s.addShape(pres.shapes.RECTANGLE, {
-    x: 0.5, y: 0.4, w: 9.0, h: 4.4, fill: { color: "1A1A1A" }, line: { color: "303030", width: 1 },
+  s.addText("会議チャットへの仕様補完投稿", {
+    x: 0.4, y: 0.7, w: 9.2, h: 0.55,
+    fontSize: 24, color: COLOR.ink, fontFace: FONT_JP, bold: true, margin: 0,
   });
 
-  s.addText("[ 画面録画 A を差し込む ]", {
-    x: 0.5, y: 2.2, w: 9.0, h: 0.6,
-    fontSize: 22, color: "8A8A8A", fontFace: FONT_HEAD, bold: true, align: "center", margin: 0,
+  s.addText("実 Teams 会議に MOCHI-kiki を入れて、発話を検知 → [仕様補完] プレフィックス付きで自動投稿", {
+    x: 0.4, y: 1.25, w: 9.2, h: 0.3,
+    fontSize: 12, color: COLOR.inkMuted, fontFace: FONT_JP, margin: 0,
   });
 
-  s.addText("Teams 会議 (左) + チャット欄 (右) のスプリット。発話 → 数十秒で [仕様補完] 自動投稿。\n実時間 ~25 秒は 4–6x 倍速 + テロップ「実測 ~25 秒」を重ねる。", {
-    x: 0.5, y: 3.0, w: 9.0, h: 1.0,
-    fontSize: 13, color: "8A8A8A", fontFace: FONT_JP, align: "center", valign: "top", margin: 0,
+  // demo-a-chat.png : 1094 x 639 (aspect 1.712)。3.65 inch 高さ枠に contain
+  s.addImage({
+    path: "assets/demo-a-chat.png",
+    x: 1.88, y: 1.6, w: 6.24, h: 3.65,
+    sizing: { type: "contain", w: 6.24, h: 3.65 },
   });
 
-  s.addText("DEMO A  /  ~40 秒", {
-    x: 0.5, y: 5.0, w: 9.0, h: 0.3,
-    fontSize: 10, color: "6A6A6A", fontFace: FONT_HEAD, align: "center", margin: 0,
-  });
+  addFooter(s, 7, TOTAL);
 
   s.addNotes(
     [
       "[1:30–2:10 / 40 秒]",
       "",
-      "会議で「マスター切替の RU 上限ってどれくらいでしたっけ」と話します。",
+      "会議で「MOCHI-kiki の仕様を教えてください」と話します。",
       "意図検知が spec_inquiry と判定し、キーワードでハイブリッド検索が走ります。",
-      "GPT-4o が 200 字以内に整形し、会議チャットへ [仕様補完] プレフィックス付きで自動投稿します。",
-      "発言者はドキュメントを開かなくて済みます。",
+      "GPT-4o が 200 字以内に整形し、会議チャットへ [仕様補完] プレフィックス付きで自動投稿されます。",
+      "発言者はドキュメントを開かずに済みます。",
       "",
-      "[撮影メモ]",
-      "・素材: Teams 会議 5–10 分を Cmd+Shift+5 でフル録画。チャット欄が見える分割。",
-      "・編集: 待機時間は 4–6x 倍速、テロップ「実測 ~25 秒」を画面下に重ねる。",
-      "・字幕は必須 (DaVinci の音声→字幕 or CapCut)。",
+      "[撮影メモ] 画像を 8–10 秒表示し、必要に応じてチャットの [仕様補完] 部分にズームインまたはハイライト。",
     ].join("\n")
   );
 }
@@ -508,42 +506,106 @@ const TOTAL = 12;
   );
 }
 
-/* Slide 9: 画面録画 B スロット */
+/* Slide 9: Demo B 議事録ビュー */
 {
   const s = pres.addSlide();
-  s.background = { color: "0A0A0A" };
+  s.background = { color: COLOR.paper };
+  addEyebrow(s, "DEMO B  /  1 of 3");
 
-  s.addShape(pres.shapes.RECTANGLE, {
-    x: 0.5, y: 0.4, w: 9.0, h: 4.4, fill: { color: "1A1A1A" }, line: { color: "303030", width: 1 },
+  s.addText("ライブ議事録ビュー  —  議事録", {
+    x: 0.4, y: 0.7, w: 9.2, h: 0.55,
+    fontSize: 24, color: COLOR.ink, fontFace: FONT_JP, bold: true, margin: 0,
   });
 
-  s.addText("[ 画面録画 B を差し込む ]", {
-    x: 0.5, y: 2.2, w: 9.0, h: 0.6,
-    fontSize: 22, color: "8A8A8A", fontFace: FONT_HEAD, bold: true, align: "center", margin: 0,
+  s.addText("90 秒ごとに「議題 / 決定事項 / TODO / 質疑応答」を構造化 Markdown で全文再生成", {
+    x: 0.4, y: 1.25, w: 9.2, h: 0.3,
+    fontSize: 12, color: COLOR.inkMuted, fontFace: FONT_JP, margin: 0,
   });
 
-  s.addText("管理コンソール /meeting?id=... の 3 ビューを順に映す。\n議事録 → タイムライン → 文字起こし。更新間隔の差をテロップで補足。", {
-    x: 0.5, y: 3.0, w: 9.0, h: 1.0,
-    fontSize: 13, color: "8A8A8A", fontFace: FONT_JP, align: "center", valign: "top", margin: 0,
+  // demo-b-minutes.png : 1158 x 612 (aspect 1.892)
+  s.addImage({
+    path: "assets/demo-b-minutes.png",
+    x: 1.55, y: 1.6, w: 6.9, h: 3.65,
+    sizing: { type: "contain", w: 6.9, h: 3.65 },
   });
 
-  s.addText("DEMO B  /  ~25 秒", {
-    x: 0.5, y: 5.0, w: 9.0, h: 0.3,
-    fontSize: 10, color: "6A6A6A", fontFace: FONT_HEAD, align: "center", margin: 0,
-  });
+  addFooter(s, 9, TOTAL);
 
   s.addNotes(
     [
-      "[2:25–2:50 / 25 秒]",
+      "[2:25–2:35 / 10 秒]",
       "",
-      "議事録ビューに切り替えます。",
-      "会議の発話から、議題・決定事項・TODO・質疑応答が 90 秒ごとに構造化 Markdown で再生成されます。",
-      "タイムラインは 5 分ブロックごとに 150 字要約。確定済みブロックには触らず、末尾のみ再要約します。",
-      "文字起こしは 5 秒ポーリングで最新発話まで追えます。",
+      "ライブ議事録ビューを開きます。",
+      "発話から議題・決定事項・TODO・質疑応答が、90 秒ごとに構造化 Markdown で全文再生成されます。",
+    ].join("\n")
+  );
+}
+
+/* Slide 10: Demo B タイムラインビュー */
+{
+  const s = pres.addSlide();
+  s.background = { color: COLOR.paper };
+  addEyebrow(s, "DEMO B  /  2 of 3");
+
+  s.addText("ライブ議事録ビュー  —  タイムライン", {
+    x: 0.4, y: 0.7, w: 9.2, h: 0.55,
+    fontSize: 24, color: COLOR.ink, fontFace: FONT_JP, bold: true, margin: 0,
+  });
+
+  s.addText("ブロックごとに 150 字以内に要約。末尾ブロックのみ再要約し、確定済みは触らない", {
+    x: 0.4, y: 1.25, w: 9.2, h: 0.3,
+    fontSize: 12, color: COLOR.inkMuted, fontFace: FONT_JP, margin: 0,
+  });
+
+  // demo-b-timeline.png : 1220 x 355 (aspect 3.437) 横長
+  s.addImage({
+    path: "assets/demo-b-timeline.png",
+    x: 0.5, y: 2.2, w: 9.0, h: 2.62,
+    sizing: { type: "contain", w: 9.0, h: 2.62 },
+  });
+
+  addFooter(s, 10, TOTAL);
+
+  s.addNotes(
+    [
+      "[2:35–2:43 / 8 秒]",
       "",
-      "[撮影メモ]",
-      "・/meeting?id=... を別ウィンドウで開いた状態の録画。タブ切替を 3 回。",
-      "・更新がよく見えるよう、会議終盤の発話が積もった素材を選ぶ。",
+      "次がタイムライン。",
+      "ブロックごとに 150 字に要約します。確定済みブロックには触らず、末尾のみ再要約する設計です。",
+    ].join("\n")
+  );
+}
+
+/* Slide 11: Demo B 文字起こしビュー */
+{
+  const s = pres.addSlide();
+  s.background = { color: COLOR.paper };
+  addEyebrow(s, "DEMO B  /  3 of 3");
+
+  s.addText("ライブ議事録ビュー  —  文字起こし", {
+    x: 0.4, y: 0.7, w: 9.2, h: 0.55,
+    fontSize: 24, color: COLOR.ink, fontFace: FONT_JP, bold: true, margin: 0,
+  });
+
+  s.addText("発話データをそのまま 5 秒ポーリングで表示。最新発話を即座に追える", {
+    x: 0.4, y: 1.25, w: 9.2, h: 0.3,
+    fontSize: 12, color: COLOR.inkMuted, fontFace: FONT_JP, margin: 0,
+  });
+
+  // demo-b-transcript.png : 1178 x 619 (aspect 1.903)
+  s.addImage({
+    path: "assets/demo-b-transcript.png",
+    x: 1.535, y: 1.6, w: 6.93, h: 3.65,
+    sizing: { type: "contain", w: 6.93, h: 3.65 },
+  });
+
+  addFooter(s, 11, TOTAL);
+
+  s.addNotes(
+    [
+      "[2:43–2:50 / 7 秒]",
+      "",
+      "文字起こしビューは 5 秒ポーリングで最新発話まで追えます。",
     ].join("\n")
   );
 }
@@ -602,7 +664,7 @@ const TOTAL = 12;
     { x: 5.4, y: cy + 0.6, w: 4.1, h: ch - 0.7, fontSize: 12, color: COLOR.ink, fontFace: FONT_JP, valign: "top" }
   );
 
-  addFooter(s, 10, TOTAL);
+  addFooter(s, 12, TOTAL);
 
   s.addNotes(
     [
@@ -660,7 +722,7 @@ const TOTAL = 12;
     });
   });
 
-  addFooter(s, 11, TOTAL);
+  addFooter(s, 13, TOTAL);
 
   s.addNotes(
     [
