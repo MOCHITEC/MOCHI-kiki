@@ -11,9 +11,9 @@ from botbuilder.schema import ConversationReference
 
 from src.models import Utterance
 from src.plugins.intent_analysis import IntentAnalysisPlugin, IntentLabel
-from src.plugins.rag_search import RAGSearchPlugin
 from src.plugins.answer_generation import AnswerGenerationPlugin
-from src.plugins.chat_poster import ChatPosterPlugin
+from src.services.rag_search import RAGSearch
+from src.services.chat_poster import ChatPoster
 
 
 class Orchestrator:
@@ -57,9 +57,9 @@ class Orchestrator:
         )
 
         self._intent = IntentAnalysisPlugin(kernel)
-        self._rag = RAGSearchPlugin(search_client, openai_client, embedding_deployment)
+        self._rag = RAGSearch(search_client, openai_client, embedding_deployment)
         self._answer = AnswerGenerationPlugin(kernel)
-        self._poster = ChatPosterPlugin(adapter, app_id)
+        self._poster = ChatPoster(adapter, app_id)
         self._conversation_references: Dict[str, ConversationReference] = {}
         self._speaker_references: Dict[str, ConversationReference] = {}
         self._pending_sessions: Dict[str, str] = {}

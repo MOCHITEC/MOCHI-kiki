@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import MagicMock, AsyncMock, patch
-from src.plugins.rag_search import RAGSearchPlugin, SearchResult
+from src.services.rag_search import RAGSearch, SearchResult
 
 
 @pytest.fixture
@@ -33,7 +33,7 @@ def mock_openai_client():
 
 
 def test_search_returns_results(mock_search_client, mock_openai_client):
-    plugin = RAGSearchPlugin.__new__(RAGSearchPlugin)
+    plugin = RAGSearch.__new__(RAGSearch)
     plugin._search_client = mock_search_client
     plugin._openai_client = mock_openai_client
     plugin._embedding_deployment = "text-embedding-3-small"
@@ -46,7 +46,7 @@ def test_search_returns_results(mock_search_client, mock_openai_client):
 
 
 def test_search_with_empty_keywords(mock_search_client, mock_openai_client):
-    plugin = RAGSearchPlugin.__new__(RAGSearchPlugin)
+    plugin = RAGSearch.__new__(RAGSearch)
     plugin._search_client = mock_search_client
     plugin._openai_client = mock_openai_client
     plugin._embedding_deployment = "text-embedding-3-small"

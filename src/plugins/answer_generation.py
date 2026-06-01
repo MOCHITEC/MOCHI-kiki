@@ -4,7 +4,7 @@ from typing import List
 import semantic_kernel as sk
 from semantic_kernel.functions import KernelArguments
 
-from src.plugins.rag_search import SearchResult
+from src.services.rag_search import SearchResult
 
 
 ANSWER_PROMPT = """

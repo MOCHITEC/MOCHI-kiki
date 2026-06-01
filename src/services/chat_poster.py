@@ -1,9 +1,14 @@
-# src/plugins/chat_poster.py
+# src/services/chat_poster.py
+"""
+Bot Framework の proactive message (continue_conversation) ラッパー。
+Semantic Kernel の Plugin ではなく通常の Python クラス。
+Orchestrator が決定論的に呼んで会議チャットへ投稿する。
+"""
 from botbuilder.core import BotFrameworkAdapter, TurnContext
 from botbuilder.schema import Activity, ConversationReference
 
 
-class ChatPosterPlugin:
+class ChatPoster:
     def __init__(self, adapter: BotFrameworkAdapter, app_id: str) -> None:
         self._adapter = adapter
         self._app_id = app_id

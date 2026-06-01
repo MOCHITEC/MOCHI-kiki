@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock
 from src.models import Utterance
 from src.kernel.orchestrator import Orchestrator
 from src.plugins.intent_analysis import IntentResult, IntentLabel
-from src.plugins.rag_search import SearchResult
+from src.services.rag_search import SearchResult
 
 
 @pytest.fixture

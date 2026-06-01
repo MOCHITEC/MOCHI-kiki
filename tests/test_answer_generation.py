@@ -2,7 +2,7 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 from src.plugins.answer_generation import AnswerGenerationPlugin
-from src.plugins.rag_search import SearchResult
+from src.services.rag_search import SearchResult
 
 
 @pytest.mark.asyncio
