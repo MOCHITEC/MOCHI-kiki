@@ -6,6 +6,10 @@ infra/*.tfstate
 infra/*.tfstate.backup
 infra/*.tfvars
 infra/.terraform.lock.hcl
+infra/*.tfplan
+
+# Claude Code local files
+.claude/
 
 # Python
 __pycache__/
