@@ -75,7 +75,7 @@ const TOTAL = 12;
     fontSize: 26, color: COLOR.ice, fontFace: FONT_JP, margin: 0,
   });
 
-  s.addText("会議の場で動く相棒 — 仕様補完と、ライブ議事録ビュー", {
+  s.addText("会議中に動くボット — 仕様補完と、ライブ議事録ビュー", {
     x: 0.7, y: 3.15, w: 9, h: 0.5,
     fontSize: 16, color: COLOR.ice, fontFace: FONT_JP, margin: 0,
   });
@@ -114,7 +114,7 @@ const TOTAL = 12;
   s.background = { color: COLOR.paper };
   addEyebrow(s, "01  /  PROBLEM");
 
-  s.addText("会議が止まる、半年後にすれ違う", {
+  s.addText("会議が止まる、認識が食い違う", {
     x: 0.4, y: 0.75, w: 9.2, h: 0.8,
     fontSize: 34, color: COLOR.ink, fontFace: FONT_JP, bold: true, margin: 0,
   });
@@ -135,7 +135,7 @@ const TOTAL = 12;
     [
       { text: "用語・仕様を確認するために、誰かが画面共有でドキュメントを探し始める", options: { bullet: true, breakLine: true, paraSpaceAfter: 12 } },
       { text: "「〇〇って何でしたっけ」に答えられず、議論が止まる", options: { bullet: true, breakLine: true, paraSpaceAfter: 12 } },
-      { text: "「あれをやっておいて」のまま会議が終わり、半年後にすれ違う", options: { bullet: true } },
+      { text: "「あれをやっておいて」のまま終わり、あとで認識が食い違う", options: { bullet: true } },
     ],
     { x: 0.7, y: cardY + 0.65, w: 4.1, h: cardH - 0.8, fontSize: 14, color: COLOR.ink, fontFace: FONT_JP, valign: "top" }
   );
@@ -165,9 +165,9 @@ const TOTAL = 12;
     [
       "[0:15–0:30 / 15 秒]",
       "",
-      "Microsoft 365 Copilot Recap は、会議のあとには要約してくれます。",
-      "ただ、会議の最中には動いてくれません。",
-      "会議の場で動いてくれる相棒が、欲しかったんです。",
+      "Microsoft 365 Copilot Recap は、会議後の要約や Action 抽出は十分まかなえます。",
+      "ただ、会議の最中には動きません。",
+      "会議中の用語確認や、認識合わせは、別の仕組みが要ります。",
     ].join("\n")
   );
 }
@@ -178,7 +178,7 @@ const TOTAL = 12;
   s.background = { color: COLOR.paper };
   addEyebrow(s, "02  /  WHAT WE BUILT");
 
-  s.addText("MOCHI-kiki — 会議の場で動く相棒", {
+  s.addText("MOCHI-kiki — 会議中に動くボット", {
     x: 0.4, y: 0.75, w: 9.2, h: 0.8,
     fontSize: 34, color: COLOR.ink, fontFace: FONT_JP, bold: true, margin: 0,
   });
@@ -201,7 +201,7 @@ const TOTAL = 12;
     x: 0.7, y: y + 0.7, w: 4.1, h: 0.6,
     fontSize: 22, color: COLOR.white, fontFace: FONT_JP, bold: true, margin: 0,
   });
-  s.addText("用語・仕様などドキュメント参照が必要な発言を検知し、社内ドキュメントを引いて 200 字の回答を会議チャットへ自発的に投稿する。", {
+  s.addText("用語・仕様などドキュメント参照が必要な発言を検知し、社内ドキュメントを引いて 200 字の回答を会議チャットへ自動投稿する。", {
     x: 0.7, y: y + 1.4, w: 4.1, h: 1.3,
     fontSize: 13, color: COLOR.ice, fontFace: FONT_JP, valign: "top", margin: 0,
   });
@@ -217,7 +217,7 @@ const TOTAL = 12;
     x: 5.4, y: y + 0.7, w: 4.1, h: 0.6,
     fontSize: 22, color: COLOR.white, fontFace: FONT_JP, bold: true, margin: 0,
   });
-  s.addText("会議の発話から議事録とタイムラインをライブ生成し、管理コンソールで閲覧できる。会議チャットは汚さない。", {
+  s.addText("会議の発話から議事録とタイムラインをライブ生成し、管理コンソールで閲覧できる。会議チャットには投稿しない。", {
     x: 5.4, y: y + 1.4, w: 4.1, h: 1.3,
     fontSize: 13, color: COLOR.ice, fontFace: FONT_JP, valign: "top", margin: 0,
   });
@@ -228,9 +228,9 @@ const TOTAL = 12;
     [
       "[0:30–0:45 / 15 秒]",
       "",
-      "それが、MOCHI-kiki です。会議の場で動くボット。",
-      "MVP は 2 機能で組みました。",
-      "1 つはドキュメント参照補完。もう 1 つはライブ議事録ビューです。",
+      "そこで作ったのが MOCHI-kiki です。",
+      "会議中に動くボットで、MVP は 2 機能。",
+      "ドキュメント参照補完と、ライブ議事録ビューです。",
     ].join("\n")
   );
 }
@@ -312,11 +312,11 @@ const TOTAL = 12;
     [
       "[0:45–1:10 / 25 秒]",
       "",
-      "では、中身の構成を見ていきます。",
+      "構成はこうです。",
       "Teams の音声と文字起こしを Recall.ai のボットから WebSocket で受け取り、",
-      "Semantic Kernel のオーケストレータが、意図検知と RAG を回します。",
+      "Semantic Kernel のオーケストレータが意図検知と RAG を回します。",
       "検索は Azure AI Search のハイブリッド検索、回答生成は GPT-4o。",
-      "投稿は Bot Framework から、会議チャットへ自発的に返します。",
+      "投稿は Bot Framework から会議チャットに返します。",
     ].join("\n")
   );
 }
@@ -437,8 +437,8 @@ const TOTAL = 12;
       "",
       "会議で「マスター切替の RU 上限ってどれくらいでしたっけ」と話します。",
       "意図検知が spec_inquiry と判定し、キーワードでハイブリッド検索が走ります。",
-      "GPT-4o が 200 字以内に整形し、会議チャットへ [仕様補完] プレフィックス付きで自動投稿されます。",
-      "社内ドキュメントを誰も画面共有しないまま、議論が前に進みます。",
+      "GPT-4o が 200 字以内に整形し、会議チャットへ [仕様補完] プレフィックス付きで自動投稿します。",
+      "発言者はドキュメントを開かなくて済みます。",
       "",
       "[撮影メモ]",
       "・素材: Teams 会議 5–10 分を Cmd+Shift+5 でフル録画。チャット欄が見える分割。",
@@ -454,12 +454,12 @@ const TOTAL = 12;
   s.background = { color: COLOR.paper };
   addEyebrow(s, "05  /  LIVE MINUTES");
 
-  s.addText("ライブ議事録ビュー  —  会議チャットを汚さない", {
+  s.addText("ライブ議事録ビュー  —  別 UI に切り出し", {
     x: 0.4, y: 0.75, w: 9.2, h: 0.7,
     fontSize: 28, color: COLOR.ink, fontFace: FONT_JP, bold: true, margin: 0,
   });
 
-  s.addText("管理コンソール /meeting?id=... で 3 つのテンポを 1 画面に同居させる。", {
+  s.addText("管理コンソール /meeting?id=... に 3 つのビューを並べている。", {
     x: 0.4, y: 1.4, w: 9.2, h: 0.4,
     fontSize: 13, color: COLOR.inkMuted, fontFace: FONT_JP, margin: 0,
   });
@@ -500,9 +500,9 @@ const TOTAL = 12;
     [
       "[2:10–2:25 / 15 秒]",
       "",
-      "議事録ビューは別 UI に切り出しました。",
-      "会議チャットを汚さず、あとから振り返る用途。",
-      "3 つのテンポを 1 画面に同居させます。",
+      "議事録ビューは別 UI に切り出しています。",
+      "会議チャットには投稿せず、あとから振り返る用途です。",
+      "1 画面に 3 つのビューがあります。",
       "議事録は 90 秒、タイムラインは 5 分、文字起こしは 5 秒で更新します。",
     ].join("\n")
   );
@@ -554,7 +554,7 @@ const TOTAL = 12;
   s.background = { color: COLOR.paper };
   addEyebrow(s, "06  /  KNOWN ISSUE", COLOR.amber);
 
-  s.addText("現状の弱点  —  補完投稿のレイテンシ", {
+  s.addText("現状の課題  —  補完投稿のレイテンシ", {
     x: 0.4, y: 0.75, w: 9.2, h: 0.7,
     fontSize: 28, color: COLOR.ink, fontFace: FONT_JP, bold: true, margin: 0,
   });
@@ -565,7 +565,7 @@ const TOTAL = 12;
   s.addShape(pres.shapes.RECTANGLE, {
     x: 0.4, y: 1.55, w: 0.08, h: 0.85, fill: { color: COLOR.amber }, line: { color: COLOR.amber },
   });
-  s.addText("発話から投稿まで数十秒。「即答」は MVP では未達。後追い補足として機能している段階。", {
+  s.addText("発話から投稿まで数十秒かかり、即答は MVP では未達。後追いの補足にとどまっている。", {
     x: 0.7, y: 1.55, w: 8.8, h: 0.85,
     fontSize: 14, color: COLOR.ink, fontFace: FONT_JP, bold: true, valign: "middle", margin: 0,
   });
@@ -590,14 +590,14 @@ const TOTAL = 12;
   s.addShape(pres.shapes.RECTANGLE, {
     x: 5.1, y: cy, w: 4.5, h: ch, fill: { color: COLOR.white }, line: { color: COLOR.ice, width: 1 },
   });
-  s.addText("本番投入前の宿題", {
+  s.addText("残課題", {
     x: 5.4, y: cy + 0.2, w: 4.1, h: 0.35,
     fontSize: 12, color: COLOR.oceanDeep, fontFace: FONT_HEAD, bold: true, charSpacing: 3, margin: 0,
   });
   s.addText(
     [
-      { text: "Recall.ai を諦め、低遅延な STT に置き換える検証", options: { bullet: true, breakLine: true, paraSpaceAfter: 10 } },
-      { text: "Recall.ai だけで現実的な Teams 音声取得と即答は両立しない、というのが MVP の学び", options: { bullet: true } },
+      { text: "Recall.ai を外し、低遅延な STT に置き換える検証", options: { bullet: true, breakLine: true, paraSpaceAfter: 10 } },
+      { text: "Recall.ai 単体では、現実的な Teams 音声取得と即答が両立しない", options: { bullet: true } },
     ],
     { x: 5.4, y: cy + 0.6, w: 4.1, h: ch - 0.7, fontSize: 12, color: COLOR.ink, fontFace: FONT_JP, valign: "top" }
   );
@@ -608,10 +608,10 @@ const TOTAL = 12;
     [
       "[2:50–3:05 / 15 秒]",
       "",
-      "弱点も正直に話します。補完投稿のレイテンシです。",
-      "Recall.ai の日本語 STT は精度モード固定で、発話から投稿まで数十秒。",
-      "即答は未達、後追い補足にとどまっています。",
-      "STT 置き換えが本番投入前の宿題です。",
+      "課題もあります。補完投稿のレイテンシです。",
+      "Recall.ai の日本語 STT は精度モード固定で、発話から投稿まで数十秒かかります。",
+      "即答は未達で、後追いの補足にとどまっています。",
+      "STT の置き換えが今後の課題です。",
     ].join("\n")
   );
 }
@@ -686,7 +686,7 @@ const TOTAL = 12;
     fontSize: 14, color: COLOR.ice, fontFace: FONT_HEAD, bold: true, charSpacing: 6, margin: 0,
   });
 
-  s.addText("会議の場で動く相棒を、もう少し前へ。", {
+  s.addText("ここまでが、MOCHI-kiki の現状です。", {
     x: 0.7, y: 1.2, w: 9, h: 0.8,
     fontSize: 32, color: COLOR.white, fontFace: FONT_JP, bold: true, margin: 0,
   });
@@ -724,7 +724,7 @@ const TOTAL = 12;
       "[3:05–3:15 / 10 秒]",
       "",
       "詳細は Zenn の記事にまとめています。",
-      "Microsoft Agent Hackathon 2026 への提出作品でした。",
+      "Microsoft Agent Hackathon 2026 への提出作品です。",
       "ご視聴ありがとうございました。",
       "",
       "[撮影メモ] 5 秒静止 → ゆっくりフェードアウト。BGM のフェードに合わせる。",
