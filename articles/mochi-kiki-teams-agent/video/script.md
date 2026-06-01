@@ -20,7 +20,7 @@
 
 ### Slide 2 / Problem  —  0:15–0:30 (15 秒)
 
-> Microsoft 365 Copilot Recap は、会議後の要約や Action 抽出は十分まかなえます。ただ、会議の最中には動きません。会議中の用語確認や、認識合わせは、別の仕組みが要ります。
+> Copilot Recap は、会議後の要約や Action 抽出は十分まかなえます。ただ、会議の最中には動きません。会議中の用語確認や認識合わせは、別の仕組みが要ります。
 
 ---
 
@@ -129,7 +129,7 @@ MOCHI-kiki: Teams 会議に常駐する Agentic AI デモ | Microsoft Agent Hack
 ### 説明文
 
 ```
-Teams 会議の最中に動くボットを作りました。Microsoft Agent Hackathon 2026 への提出作品です。Microsoft 365 Copilot は会議後にしか動かないため、会議中の用語確認や仕様確認の場面を埋める用途で実装しています。
+Teams 会議の最中に動くボットを作りました。Microsoft Agent Hackathon 2026 への提出作品です。Copilot Recap は会議後にしか動かないため、会議中の用語確認や仕様確認の場面を埋める用途で実装しています。
 
 【MVP の機能】
 1. ドキュメント参照補完: 仕様確認が必要な発話を検知し、社内ドキュメントを RAG で引いて 200 字の回答を会議チャットへ自動投稿
