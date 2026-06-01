@@ -1,0 +1,58 @@
+[
+  {
+    "id": "mochi-kiki-001",
+    "title": "MOCHI-kiki 概要",
+    "content": "MOCHI-kiki は Microsoft Teams 会議に参加して発話を自動文字起こしし、AI が仕様質問に自動応答して会議チャットに投稿する会議サポートエージェントである。開発元は MOCHITEC。主な目的は、会議中に出た「○○の仕様はどうなってる?」といった質問に対し、社内 wiki や仕様書を RAG (Retrieval Augmented Generation) で検索して回答することで、会議の認識齟齬や情報共有不足を防ぐこと。bot 名は MOCHI-kiki、アイコンはオレンジの M。本番環境は Azure Container Apps で稼働。",
+    "source": "internal-spec",
+    "category": "overview"
+  },
+  {
+    "id": "mochi-kiki-002",
+    "title": "MOCHI-kiki アーキテクチャ",
+    "content": "MOCHI-kiki は 5 つのコンポーネントで構成される: (1) Recall.ai bot が Teams 会議に参加して音声を取得、(2) backend (Python aiohttp、Azure Container Apps) が transcript を受信して Cosmos DB に保存、(3) Orchestrator (semantic-kernel + Azure OpenAI) が意図解析→RAG 検索→AI 回答生成、(4) Azure AI Search が社内ドキュメントの全文+ベクトル検索を提供、(5) RecallChatPoster が Recall.ai の send_chat_message API を呼んで会議チャットに応答投稿。フロントエンドは Next.js の管理コンソール (Teams App install は不要)。",
+    "source": "internal-spec",
+    "category": "architecture"
+  },
+  {
+    "id": "mochi-kiki-003",
+    "title": "MOCHI-kiki bot の投入方法",
+    "content": "MOCHI-kiki bot を会議に投入する 3 つの方法がある。(1) 管理コンソール経由: https://mochikiki-bot-dev.<...>/login で admin/admin ログイン後、Bot を投入 画面で Teams 会議 URL を入力。(2) シェルスクリプト: ./scripts/test_recall_ws.sh \"<TEAMS_URL>\" を実行。(3) Recall.ai REST API 直接呼び出し: POST https://us-west-2.recall.ai/api/v1/bot/ に meeting_url を含めて投入。投入後 bot は会議の待機室を経て自動参加、開始から数十秒で in_call_recording 状態になる。",
+    "source": "internal-spec",
+    "category": "operation"
+  },
+  {
+    "id": "mochi-kiki-004",
+    "title": "MOCHI-kiki 文字起こしと AI 応答のフロー",
+    "content": "(1) 会議参加者が発話、(2) Recall.ai が音声を文字起こし (provider: recallai_streaming、language_code: ja、mode: prioritize_accuracy)、(3) Recall.ai が WebSocket または Webhook で backend に transcript.data event を送信、(4) backend の recall_ws_handler が utterance を Cosmos DB に保存、(5) on_utterance フックで Orchestrator.process(utterance) を呼ぶ、(6) IntentAnalysisPlugin が「仕様質問」「曖昧発言」「その他」を判定、(7) 仕様質問の場合 RAGSearchPlugin が Azure AI Search でハイブリッド検索 (キーワード+ベクトル)、(8) AnswerGenerationPlugin が GPT-4o で回答生成、(9) RecallChatPoster.post(meeting_id, text) が Recall.ai の send_chat_message API を呼んで会議チャットに [仕様補完] プレフィックス付きで投稿。",
+    "source": "internal-spec",
+    "category": "flow"
+  },
+  {
+    "id": "mochi-kiki-005",
+    "title": "MOCHI-kiki 管理コンソール (フロントエンド)",
+    "content": "Next.js 16 + Tailwind CSS で実装された管理コンソール画面。5 画面構成: /login (ログイン)、/meetings (会議一覧、Load more 形式)、/meetings/:meetingId (会議詳細・文字起こし表示、5 秒ポーリング、Plain text DL)、/bots/new (Bot 投入フォーム、Teams URL を入力)、/ (ルート、/meetings へリダイレクト)。認証は CONSOLE_USERNAME / CONSOLE_PASSWORD_HASH (bcrypt) + JWT セッション (12 時間 TTL)。dev 用は admin / admin。アクセス URL: https://mochikiki-bot-dev.orangeglacier-d7a5339f.japaneast.azurecontainerapps.io/login/。",
+    "source": "internal-spec",
+    "category": "console"
+  },
+  {
+    "id": "mochi-kiki-006",
+    "title": "MOCHI-kiki の制約と既知の問題",
+    "content": "(1) Recall.ai prioritize_accuracy モードの公式遅延が 3-10 分 (日本語は prioritize_low_latency 不可)。リアルタイム性を上げるなら Deepgram BYOK または Azure Speech 自前 sink 実装が必要。(2) Microsoft Teams の channel meetings では Recall.ai の send_chat_message が使えない (private/scheduled meetings のみ対応)。(3) Tenant の Meeting chat 設定が「On for everyone」になっている必要、または Recall.ai を Signed-In bot で運用する必要。(4) 1 メッセージ 4096 文字上限。(5) Cosmos DB の meeting_id partition と recall_bot_id の整合性に注意 (find_meeting_id_by_recall_bot_id で逆引き)。",
+    "source": "internal-spec",
+    "category": "limitation"
+  },
+  {
+    "id": "mochi-kiki-007",
+    "title": "MOCHI-kiki インフラと環境変数",
+    "content": "本番環境は Azure 上に構築。リソース: Azure Container Apps (mochikiki-bot-dev)、Azure Container Registry (mochikikiacrdev)、Azure Cosmos DB (mochikiki-cosmos-dev-japaneast、autoscale 設定済み)、Azure AI Search (mochikiki-search-dev、index 名 documents)、Azure OpenAI (GPT-4o + text-embedding-3-small)、Azure Key Vault (シークレット保管)、Recall.ai (us-west-2 region)。主要環境変数: RECALL_API_KEY、RECALL_REGION (us-west-2)、RECALL_WS_PUBLIC_URL、AZURE_COSMOS_*、AZURE_SEARCH_*、AZURE_OPENAI_*、CONSOLE_ENABLED=true、CONSOLE_USERNAME=admin、CONSOLE_JWT_SECRET。Container App URL は安定 URL (revision suffix 無し) を使う。",
+    "source": "internal-spec",
+    "category": "infrastructure"
+  },
+  {
+    "id": "mochi-kiki-008",
+    "title": "MOCHI-kiki のコスト感",
+    "content": "月額コスト目安 (アイドル状態): Cosmos DB autoscale 約 1500 円、Container Apps (min 1 replica、0.5 vCPU / 1 GiB) 約 4500 円、Container Registry Basic 約 750 円、Azure OpenAI / Search / Speech 利用量次第、Key Vault / Log Analytics 数百円。合計 idle 状態の最低ラインは月 7000-10000 円程度。bot を使うとき: Recall.ai が約 8 円/分 ($0.05) で会議時間分課金、月 10 回×1 時間で約 3000 円。Azure OpenAI のトークン課金は会議内発話の処理量に応じて発生。Microsoft Graph API は無料。",
+    "source": "internal-spec",
+    "category": "cost"
+  }
+]
