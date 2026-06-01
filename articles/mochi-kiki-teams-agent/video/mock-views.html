@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>MOCHI-kiki / 会議ビュー (mock-001)</title>
+<style>
+  :root {
+    --navy-deep: #0F2A44;
+    --navy: #1C3D5A;
+    --ocean-deep: #065A82;
+    --ocean-mid: #1C7293;
+    --ice: #D6E6F0;
+    --ice-light: #EEF4F9;
+    --paper: #F6F8FA;
+    --ink: #0B1B2B;
+    --ink-muted: #55667A;
+    --amber: #D97706;
+    --line: #E2E8F0;
+    --white: #FFFFFF;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Helvetica Neue", Arial, sans-serif;
+    font-size: 13px;
+    line-height: 1.55;
+    min-width: 1600px;
+  }
+
+  header.app-bar {
+    background: var(--navy-deep);
+    color: var(--white);
+    padding: 16px 28px 18px;
+    display: flex;
+    align-items: baseline;
+    gap: 24px;
+    border-bottom: 4px solid var(--ocean-mid);
+  }
+  .brand {
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 2px;
+    color: var(--ice);
+  }
+  .brand .dot { color: var(--ocean-mid); margin: 0 6px; }
+  .meeting-title {
+    font-weight: 600;
+    font-size: 17px;
+    color: var(--white);
+  }
+  .meeting-meta {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--ice);
+    letter-spacing: 0.5px;
+  }
+  .meeting-meta code {
+    background: rgba(255,255,255,0.1);
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 11px;
+    color: var(--ice);
+  }
+
+  main.grid {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr 1fr;
+    gap: 16px;
+    padding: 18px 22px 24px;
+    max-height: calc(100vh - 90px);
+  }
+
+  section.view {
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    min-height: 720px;
+    box-shadow: 0 1px 3px rgba(15, 42, 68, 0.04);
+    overflow: hidden;
+  }
+
+  .view-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--line);
+    background: var(--white);
+  }
+  .view-head h2 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: 0.3px;
+  }
+  .tempo {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ocean-deep);
+    background: var(--ice-light);
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--ice);
+  }
+  .last-updated {
+    font-size: 11px;
+    color: var(--ink-muted);
+    padding: 6px 18px 0;
+    background: var(--white);
+  }
+  .last-updated .pulse {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    background: #22C55E;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+    box-shadow: 0 0 0 0 rgba(34,197,94,0.5);
+    animation: pulse 1.4s ease-out infinite;
+  }
+  @keyframes pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(34,197,94,0.5); }
+    100% { box-shadow: 0 0 0 8px rgba(34,197,94,0); }
+  }
+
+  .view-body {
+    padding: 14px 20px 18px;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  /* Common markdown-ish styling inside view-body */
+  .view-body h3 {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ocean-deep);
+    margin: 14px 0 6px;
+    letter-spacing: 0.4px;
+  }
+  .view-body h3:first-child { margin-top: 0; }
+  .view-body h4 {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink-muted);
+    margin: 10px 0 4px;
+  }
+  .view-body p { margin: 4px 0 8px; }
+  .view-body ul, .view-body ol {
+    padding-left: 18px;
+    margin: 4px 0 10px;
+  }
+  .view-body li { margin: 2px 0; }
+  .view-body code {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    background: var(--ice-light);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 11.5px;
+    color: var(--navy-deep);
+  }
+  .view-body .qa { margin-bottom: 10px; }
+  .view-body .qa-q {
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 2px;
+  }
+  .view-body .qa-a { color: var(--ink-muted); padding-left: 14px; }
+
+  /* Timeline blocks */
+  .block {
+    border-left: 3px solid var(--ice);
+    padding: 8px 0 8px 14px;
+    margin-bottom: 10px;
+  }
+  .block.confirmed { border-left-color: var(--ocean-mid); }
+  .block.live      { border-left-color: var(--amber); background: linear-gradient(to right, #FEF3C7 0%, transparent 70%); }
+  .block-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .block-time {
+    font-weight: 700;
+    color: var(--ink);
+    font-size: 12px;
+  }
+  .block-title { color: var(--ink); font-weight: 600; font-size: 12px; }
+  .block-tag {
+    margin-left: auto;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: var(--ice-light);
+    color: var(--ocean-deep);
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+  .block.live .block-tag { background: #FEF3C7; color: var(--amber); }
+  .block-body { color: var(--ink-muted); font-size: 12px; line-height: 1.6; }
+
+  /* Transcript utterances */
+  .utt {
+    padding: 6px 0;
+    border-bottom: 1px dashed #EEF1F5;
+  }
+  .utt:last-child { border-bottom: none; }
+  .utt-head {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 2px;
+    font-size: 11px;
+    color: var(--ink-muted);
+  }
+  .utt-time {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    color: var(--ink-muted);
+  }
+  .utt-speaker { font-weight: 600; color: var(--ocean-deep); }
+  .utt-body { color: var(--ink); font-size: 12.5px; }
+
+  /* Decision / TODO lists */
+  .decision { padding: 4px 0; display: flex; gap: 8px; font-size: 12px; color: var(--ink); }
+  .decision::before { content: "●"; color: var(--ocean-mid); flex-shrink: 0; }
+  .todo {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    padding: 4px 0;
+    font-size: 12px;
+    color: var(--ink);
+  }
+  .todo .cb {
+    flex-shrink: 0;
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 1.5px solid var(--ink-muted);
+    border-radius: 3px;
+    margin-top: 2px;
+  }
+  .todo .who { font-weight: 600; color: var(--ocean-deep); margin-right: 4px; }
+</style>
+</head>
+<body>
+<header class="app-bar">
+  <div class="brand">MOCHI-kiki <span class="dot">/</span> 管理コンソール</div>
+  <div class="meeting-title">仕様詰めミーティング</div>
+  <div class="meeting-meta">
+    2026-06-02 14:00–14:30　·　参加者 2 名　·　<code>meeting_id: mock-001</code>
+  </div>
+</header>
+
+<main class="grid">
+
+  <!-- ============ 議事録 ============ -->
+  <section class="view">
+    <div class="view-head">
+      <h2>議事録</h2>
+      <span class="tempo">更新 90 秒</span>
+    </div>
+    <div class="last-updated"><span class="pulse"></span>14:30:42 に再生成 (全文)</div>
+    <div class="view-body">
+      <h3>議題</h3>
+      <ol>
+        <li>Recall.ai レイテンシ実測値の共有と「会議中即答」の現実性</li>
+        <li>STT 置き換え候補の比較と方針</li>
+        <li>補完投稿の重複防止 (cooldown 仕様)</li>
+        <li>AI Search 差分インデックスの自動更新化</li>
+        <li>議事録 90 秒生成の本番想定検証</li>
+        <li>Teams App manifest 提出スケジュール</li>
+      </ol>
+
+      <h3>決定事項</h3>
+      <div class="decision">「会議中に即答」の文言を「後追い補足」に修正</div>
+      <div class="decision">STT 置き換え先は Azure AI Speech に決定。Recall.ai の <code>audio_mixed_raw</code> を流し込む構成</div>
+      <div class="decision">補完投稿の重複防止はキーワードハッシュ + 30 分 cooldown で運用</div>
+      <div class="decision">AI Search 差分インデックス更新を Container Apps Jobs の cron に移行 (月・木 03:00 JST)</div>
+      <div class="decision">議事録 90 秒生成の本番検証は来週水曜の定例ミーティング (1 時間想定) で実施</div>
+      <div class="decision">Teams App manifest はプレビュー権限版でハッカソン提出、注釈で動作確認方法を明示</div>
+
+      <h3>TODO</h3>
+      <div class="todo"><span class="cb"></span><div><span class="who">Nakagawa</span>Azure AI Speech + Recall.ai <code>audio_mixed_raw</code> の POC を来週着手</div></div>
+      <div class="todo"><span class="cb"></span><div><span class="who">Nakagawa</span>posted_completions cooldown ロジックの実装 (本日中)</div></div>
+      <div class="todo"><span class="cb"></span><div><span class="who">Nakagawa</span>AI Search 差分インデックス更新を Terraform / Container Apps Jobs cron に移行</div></div>
+      <div class="todo"><span class="cb"></span><div><span class="who">Ueda</span>来週水曜の定例ミーティング録音同意を参加者から取得</div></div>
+      <div class="todo"><span class="cb"></span><div><span class="who">Ueda</span>ハッカソン提出物に「プレビュー権限で動作確認可能」の注釈を追記</div></div>
+
+      <h3>質疑応答</h3>
+      <div class="qa">
+        <div class="qa-q">Q: STT を Azure AI Speech に置き換えても、Recall.ai の音声取得経路は残るのでは?</div>
+        <div class="qa-a">A: Recall.ai の <code>audio_mixed_raw</code> を Azure Speech に流し込めば、Recall.ai は音声取得層として残しつつ STT のみ置換できる。POC を来週着手して実証する。</div>
+      </div>
+      <div class="qa">
+        <div class="qa-q">Q: 議事録 90 秒生成のコストはどの程度になるか?</div>
+        <div class="qa-a">A: 1 時間会議を 90 秒間隔で生成する場合、GPT-4o 呼び出しは約 40 回。試算では 1 万円以内に収まる見込み。</div>
+      </div>
+      <div class="qa">
+        <div class="qa-q">Q: Teams App manifest の stable 取得はハッカソン提出に間に合うか?</div>
+        <div class="qa-a">A: proof-of-team-installation のロールアウトに 2 週間掛かるため間に合わない。プレビュー権限版で提出し、注釈で「プレビュー権限で動作確認可能」と明示する方針。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ タイムライン ============ -->
+  <section class="view">
+    <div class="view-head">
+      <h2>タイムライン</h2>
+      <span class="tempo">更新 90 秒</span>
+    </div>
+    <div class="last-updated"><span class="pulse"></span>14:30:42 に末尾ブロックを再要約</div>
+    <div class="view-body">
+
+      <div class="block confirmed">
+        <div class="block-head">
+          <span class="block-time">14:00–14:05</span>
+          <span class="block-title">Recall.ai レイテンシの実測共有</span>
+          <span class="block-tag">確定</span>
+        </div>
+        <div class="block-body">Recall.ai の日本語精度モードで発話から transcript.data 取得まで平均 18 秒、長い発話で 30 秒超。実測値は scripts/measure_recall_latency.py の runs/2026-05-28 に残置。「会議中に即答」は未達と認め、後追い補足の位置づけで合意。</div>
+      </div>
+
+      <div class="block confirmed">
+        <div class="block-head">
+          <span class="block-time">14:05–14:10</span>
+          <span class="block-title">STT 置き換えの方針</span>
+          <span class="block-tag">確定</span>
+        </div>
+        <div class="block-body">代替候補 (Azure AI Speech / Deepgram Nova-3 / AssemblyAI Universal-2) のうち、Azure 縛りのため Azure AI Speech に決定。Recall.ai の audio_mixed_raw を Azure Speech へ中継する構成で POC は来週着手。</div>
+      </div>
+
+      <div class="block confirmed">
+        <div class="block-head">
+          <span class="block-time">14:10–14:15</span>
+          <span class="block-title">補完投稿の重複防止</span>
+          <span class="block-tag">確定</span>
+        </div>
+        <div class="block-body">キーワードハッシュ + 30 分 cooldown で運用することで合意。Cosmos の posted_completions コンテナに timestamp が既存のためクエリ 1 本で実装可能。本日中の TODO に追加した。</div>
+      </div>
+
+      <div class="block confirmed">
+        <div class="block-head">
+          <span class="block-time">14:15–14:20</span>
+          <span class="block-title">AI Search 差分更新の自動化</span>
+          <span class="block-tag">確定</span>
+        </div>
+        <div class="block-body">手動週次の index_refresh.sh を Container Apps Jobs の cron に移行。実行は月・木 03:00 JST、Cosmos throughput alarm の帯を外す配慮あり。Terraform で記述する方針。</div>
+      </div>
+
+      <div class="block confirmed">
+        <div class="block-head">
+          <span class="block-time">14:20–14:25</span>
+          <span class="block-title">議事録 90 秒生成の本番検証計画</span>
+          <span class="block-tag">確定</span>
+        </div>
+        <div class="block-body">来週水曜の定例ミーティング (1 時間想定) を録音し本番検証する。GPT-4o 呼び出し 40 回、コストは 1 万円以内見込み。録音同意の取得は Ueda 担当。</div>
+      </div>
+
+      <div class="block live">
+        <div class="block-head">
+          <span class="block-time">14:25–14:30</span>
+          <span class="block-title">Teams App manifest 提出戦略</span>
+          <span class="block-tag">再要約中</span>
+        </div>
+        <div class="block-body">proof-of-team-installation の stable 取得は 2 週間掛かるため、プレビュー権限版でハッカソン提出する方針に決定。提出物に「プレビュー権限で動作確認可」の注釈を添え、動画は proactive 投稿の挙動のみ提示する。</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============ 文字起こし ============ -->
+  <section class="view">
+    <div class="view-head">
+      <h2>文字起こし</h2>
+      <span class="tempo">更新 5 秒</span>
+    </div>
+    <div class="last-updated"><span class="pulse"></span>14:30:48 に最新発話を取得</div>
+    <div class="view-body">
+
+      <div class="utt"><div class="utt-head"><span class="utt-time">14:00:12</span><span class="utt-speaker">Ueda</span></div><div class="utt-body">Recall.ai のレイテンシ、結局どれくらいに着地した？</div></div>
+      <div class="utt"><div class="utt-head"><span class="utt-time">14:00:25</span><span class="utt-speaker">Nakagawa</span></div><div class="utt-body">日本語の精度モードだと、発話から transcript.data が落ちてくるまで平均 18 秒。長い発話だと 30 秒超えるケースもある。</div></div>
+      <div class="utt"><div class="utt-head"><span class="utt-time">14:00:41</span><span class="utt-speaker">Ueda</span></div><div class="utt-body">記事では「数十秒」ってぼかしてあるけど、実測値の根拠ファイル残してる？</div></div>
+      <div class="utt"><div class="utt-head"><span class="utt-time">14:00:55</span><span class="utt-speaker">Nakagawa</span></div><div class="utt-body">scripts/measure_recall_latency.py の出力が runs/2026-05-28 にある。</div></div>
+      <div class="utt"><div class="utt-head"><span class="utt-time">14:01:08</span><span class="utt-speaker">Ueda</span></div><div class="utt-body">OK、後で見る。じゃあ「会議中に即答」は現状無理だね。</div></div>
+      <div class="utt"><div class="utt-head"><span class="utt-time">14:01:18</span><span class="utt-speaker">Nakagawa</span></div><div class="utt-body">うん。後追い補足って位置づけにせざるを得ない。</div></div>
+      <div class="utt"><div class="utt-head"><span class="utt-time">14:01:32</span><span class="utt-speaker">Ueda</span></div><div class="utt-body">記事の冒頭で「即答を狙ったが未達」って正直に書いてある。それで通そう。</div></div>
+      <div class="utt"><div class="utt-head"><span class="utt-time">14:05:02</span><span class="utt-speaker">Ueda</span></div><div class="utt-body">STT 置き換えの候補、何が出てた？</div></div>
+      <div class="utt"><div class="utt-head"><span class="utt-time">14:05:15</span><span class="utt-speaker">Nakagawa</span></div><div class="utt-body">Azure AI Speech のリアルタイム転写、Deepgram Nova-3、AssemblyAI Universal-2 の 3 つ。</div></div>
+      <div class="utt"><div class="utt-head"><span class="utt-time">14:05:30</span><span class="utt-speaker">Ueda</span></div><div class="utt-body">ハッカソン提出は Azure 縛りだから一択でしょ。</div></div>
+      <div class="utt"><div class="utt-head"><span class="utt-time">14:05:39</span><span class="utt-speaker">Nakagawa</span></div><div class="utt-body">そう。ただ Recall.ai は音声取得まで含めて代替してくれてるから、STT だけ替えても音声配管が残る問題は別途解く必要がある。</div></div>
+      <div class="utt"><div class="utt-head"><span class="utt-time">14:05:58</span><span class="utt-speaker">Ueda</span></div><div class="utt-body">Recall.ai の audio_mixed_raw を Azure Speech に流し込めばいいんじゃない？</div></div>
+      <div class="utt"><div class="utt-head"><span class="utt-time">14:06:12</span><span class="utt-speaker">Nakagawa</span></div><div class="utt-body">やってみる価値はある。POC は一晩で組めると思う。</div></div>
+      <div class="utt"><div class="utt-head"><span class="utt-time">14:06:24</span><span class="utt-speaker">Ueda</span></div><div class="utt-body">じゃあ来週着手で。</div></div>
+      <div class="utt"><div class="utt-head"><span class="utt-time">14:10:08</span><span class="utt-speaker">Ueda</span></div><div class="utt-body">補完投稿、同じ質問が再質問されたとき重複しないようにしたい。</div></div>
+      <div class="utt"><div class="utt-head"><span class="utt-time">14:10:22</span><span class="utt-speaker">Nakagawa</span></div><div class="utt-body">キーワードハッシュで cooldown かける？</div></div>
+      <div class="utt"><div class="utt-head"><span class="utt-time">14:10:30</span><span class="utt-speaker">Ueda</span></div><div class="utt-body">うん。30 分以内に同じハッシュが来たら投稿しない、で十分。</div></div>
+      <div class="utt"><div class="utt-head"><span class="utt-time">14:10:45</span><span class="utt-speaker">Nakagawa</span></div><div class="utt-body">Cosmos の posted_completions コンテナに timestamp 入れてある。クエリ 1 本で済む。</div></div>
+      <div class="utt"><div class="utt-head"><span class="utt-time">14:11:01</span><span class="utt-speaker">Ueda</span></div><div class="utt-body">じゃあそれで。今日の TODO に入れる。</div></div>
+      <div class="utt"><div class="utt-head"><span class="utt-time">14:15:18</span><span class="utt-speaker">Ueda</span></div><div class="utt-body">社内ドキュメントの差分インデックス、まだ手動で回してるよね？</div></div>
+      <div class="utt"><div class="utt-head"><span class="utt-time">14:15:30</span><span class="utt-speaker">Nakagawa</span></div><div class="utt-body">うん。週次で index_refresh.sh 叩いてる。</div></div>
+      <div class="utt"><div class="utt-head"><span class="utt-time">14:15:42</span><span class="utt-speaker">Ueda</span></div><div class="utt-body">Container Apps Jobs の cron に乗せちゃおう。</div></div>
+      <div class="utt"><div class="utt-head"><span class="utt-time">14:15:55</span><span class="utt-speaker">Nakagawa</span></div><div class="utt-body">Terraform 側で書ける。月曜と木曜の朝 3 時、Cosmos の throughput alarm が切れてる時間帯。</div></div>
+      <div class="utt"><div class="utt-head"><span class="utt-time">14:16:09</span><span class="utt-speaker">Ueda</span></div><div class="utt-body">じゃあそれで。</div></div>
+      <div class="utt"><div class="utt-head"><span class="utt-time">14:20:14</span><span class="utt-speaker">Ueda</span></div><div class="utt-body">議事録 90 秒間隔の生成、ハッカソン提出前に本番想定の会議で 1 時間試したい。</div></div>
+      <div class="utt"><div class="utt-head"><span class="utt-time">14:20:28</span><span class="utt-speaker">Nakagawa</span></div><div class="utt-body">コスト試算は？</div></div>
+      <div class="utt"><div class="utt-head"><span class="utt-time">14:20:35</span><span class="utt-speaker">Ueda</span></div><div class="utt-body">90 秒間隔で 1 時間なら GPT-4o の呼び出しが 40 回。1 万円いかないはず。</div></div>
+      <div class="utt"><div class="utt-head"><span class="utt-time">14:20:51</span><span class="utt-speaker">Nakagawa</span></div><div class="utt-body">OK、来週水曜の定例ミーティングを録音させてもらう？</div></div>
+      <div class="utt"><div class="utt-head"><span class="utt-time">14:21:02</span><span class="utt-speaker">Ueda</span></div><div class="utt-body">うん、参加者には事前に同意取る。</div></div>
+      <div class="utt"><div class="utt-head"><span class="utt-time">14:25:06</span><span class="utt-speaker">Ueda</span></div><div class="utt-body">Teams App の manifest、ハッカソン提出までに stable 取らないとまずい。</div></div>
+      <div class="utt"><div class="utt-head"><span class="utt-time">14:25:19</span><span class="utt-speaker">Nakagawa</span></div><div class="utt-body">proof-of-team-installation のロールアウト、まだ 2 週間かかる。</div></div>
+      <div class="utt"><div class="utt-head"><span class="utt-time">14:25:31</span><span class="utt-speaker">Ueda</span></div><div class="utt-body">じゃあプレビュー権限で出すしかないか。</div></div>
+      <div class="utt"><div class="utt-head"><span class="utt-time">14:25:42</span><span class="utt-speaker">Nakagawa</span></div><div class="utt-body">審査員には「プレビュー権限で動作確認可能」と注釈つける。</div></div>
+      <div class="utt"><div class="utt-head"><span class="utt-time">14:25:55</span><span class="utt-speaker">Ueda</span></div><div class="utt-body">動画では proactive 投稿の挙動だけ見せる。manifest 配布の手間は記事の補足で触れる。</div></div>
+      <div class="utt"><div class="utt-head"><span class="utt-time">14:26:08</span><span class="utt-speaker">Nakagawa</span></div><div class="utt-body">OK、それで進めよう。</div></div>
+
+    </div>
+  </section>
+
+</main>
+</body>
+</html>
