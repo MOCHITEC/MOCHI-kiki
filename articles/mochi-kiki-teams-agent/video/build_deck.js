@@ -129,7 +129,7 @@ const TOTAL = 12;
   });
   s.addText("会議中に起きていること", {
     x: 0.7, y: cardY + 0.2, w: 4.1, h: 0.35,
-    fontSize: 12, color: COLOR.oceanDeep, fontFace: FONT_HEAD, bold: true, charSpacing: 3, margin: 0,
+    fontSize: 12, color: COLOR.oceanDeep, fontFace: FONT_HEAD, bold: true, margin: 0,
   });
   s.addText(
     [
@@ -148,7 +148,7 @@ const TOTAL = 12;
   });
   s.addText("Microsoft 365 Copilot Recap", {
     x: 5.4, y: cardY + 0.2, w: 4.1, h: 0.35,
-    fontSize: 12, color: COLOR.amber, fontFace: FONT_HEAD, bold: true, charSpacing: 3, margin: 0,
+    fontSize: 12, color: COLOR.amber, fontFace: FONT_HEAD, bold: true, margin: 0,
   });
   s.addText(
     [
@@ -282,7 +282,7 @@ const TOTAL = 12;
 
   s.addText("バックエンドサービス", {
     x: 0.4, y: 3.55, w: 9.2, h: 0.3,
-    fontSize: 11, color: COLOR.oceanDeep, fontFace: FONT_HEAD, bold: true, charSpacing: 3, margin: 0,
+    fontSize: 11, color: COLOR.oceanDeep, fontFace: FONT_HEAD, bold: true, margin: 0,
   });
   const azureNodes = [
     { x: 0.4, label: "Azure OpenAI", sub: "GPT-4o / Embedding" },
@@ -393,7 +393,7 @@ const TOTAL = 12;
 
   s.addText("次のスライドで実画面 (4–6 倍速)", {
     x: 0.4, y: 4.2, w: 9.2, h: 0.4,
-    fontSize: 14, color: COLOR.ice, fontFace: FONT_HEAD, align: "center", charSpacing: 3, margin: 0,
+    fontSize: 14, color: COLOR.ice, fontFace: FONT_HEAD, align: "center", margin: 0,
   });
 
   s.addNotes(
@@ -418,7 +418,7 @@ const TOTAL = 12;
 
   s.addText("[ 画面録画 A を差し込む ]", {
     x: 0.5, y: 2.2, w: 9.0, h: 0.6,
-    fontSize: 22, color: "8A8A8A", fontFace: FONT_HEAD, bold: true, align: "center", charSpacing: 3, margin: 0,
+    fontSize: 22, color: "8A8A8A", fontFace: FONT_HEAD, bold: true, align: "center", margin: 0,
   });
 
   s.addText("Teams 会議 (左) + チャット欄 (右) のスプリット。発話 → 数十秒で [仕様補完] 自動投稿。\n実時間 ~25 秒は 4–6x 倍速 + テロップ「実測 ~25 秒」を重ねる。", {
@@ -428,7 +428,7 @@ const TOTAL = 12;
 
   s.addText("DEMO A  /  ~40 秒", {
     x: 0.5, y: 5.0, w: 9.0, h: 0.3,
-    fontSize: 10, color: "6A6A6A", fontFace: FONT_HEAD, align: "center", charSpacing: 4, margin: 0,
+    fontSize: 10, color: "6A6A6A", fontFace: FONT_HEAD, align: "center", margin: 0,
   });
 
   s.addNotes(
@@ -490,7 +490,7 @@ const TOTAL = 12;
     });
     s.addText(`更新  ${c.tempo}`, {
       x: c.x + 0.2, y: y + h - 0.55, w: 1.4, h: 0.35,
-      fontSize: 10, color: COLOR.oceanDeep, fontFace: FONT_HEAD, bold: true, align: "center", valign: "middle", charSpacing: 2, margin: 0,
+      fontSize: 10, color: COLOR.oceanDeep, fontFace: FONT_HEAD, bold: true, align: "center", valign: "middle", margin: 0,
     });
   });
 
@@ -519,7 +519,7 @@ const TOTAL = 12;
 
   s.addText("[ 画面録画 B を差し込む ]", {
     x: 0.5, y: 2.2, w: 9.0, h: 0.6,
-    fontSize: 22, color: "8A8A8A", fontFace: FONT_HEAD, bold: true, align: "center", charSpacing: 3, margin: 0,
+    fontSize: 22, color: "8A8A8A", fontFace: FONT_HEAD, bold: true, align: "center", margin: 0,
   });
 
   s.addText("管理コンソール /meeting?id=... の 3 ビューを順に映す。\n議事録 → タイムライン → 文字起こし。更新間隔の差をテロップで補足。", {
@@ -529,7 +529,7 @@ const TOTAL = 12;
 
   s.addText("DEMO B  /  ~25 秒", {
     x: 0.5, y: 5.0, w: 9.0, h: 0.3,
-    fontSize: 10, color: "6A6A6A", fontFace: FONT_HEAD, align: "center", charSpacing: 4, margin: 0,
+    fontSize: 10, color: "6A6A6A", fontFace: FONT_HEAD, align: "center", margin: 0,
   });
 
   s.addNotes(
@@ -576,7 +576,7 @@ const TOTAL = 12;
   });
   s.addText("原因", {
     x: 0.7, y: cy + 0.2, w: 4.1, h: 0.35,
-    fontSize: 12, color: COLOR.amber, fontFace: FONT_HEAD, bold: true, charSpacing: 3, margin: 0,
+    fontSize: 12, color: COLOR.amber, fontFace: FONT_HEAD, bold: true, margin: 0,
   });
   s.addText(
     [
@@ -592,7 +592,7 @@ const TOTAL = 12;
   });
   s.addText("残課題", {
     x: 5.4, y: cy + 0.2, w: 4.1, h: 0.35,
-    fontSize: 12, color: COLOR.oceanDeep, fontFace: FONT_HEAD, bold: true, charSpacing: 3, margin: 0,
+    fontSize: 12, color: COLOR.oceanDeep, fontFace: FONT_HEAD, bold: true, margin: 0,
   });
   s.addText(
     [
