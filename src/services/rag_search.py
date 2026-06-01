@@ -1,3 +1,9 @@
+# src/services/rag_search.py
+"""
+Azure AI Search のハイブリッド検索 (ベクトル + キーワード) を叩く薄いラッパー。
+Semantic Kernel の Plugin ではなく通常の Python クラスとして提供し、
+Orchestrator から決定論的に呼ばれる。
+"""
 from dataclasses import dataclass
 from typing import List
 
@@ -14,7 +20,7 @@ class SearchResult:
     score: float
 
 
-class RAGSearchPlugin:
+class RAGSearch:
     def __init__(
         self,
         search_client: SearchClient,

@@ -10,7 +10,7 @@ from typing import Dict, List, Optional
 from src.models import Utterance
 from src.plugins.intent_analysis import IntentLabel, IntentResult
 from src.plugins.ambiguity_detector import AmbiguityResult
-from src.plugins.rag_search import SearchResult
+from src.services.rag_search import SearchResult
 from src.kernel.clarification_session import ClarificationSession, SessionStatus
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -150,7 +150,7 @@ class MockCosmos:
 
 
 # ---------------------------------------------------------------------------
-# Console poster (replaces ChatPosterPlugin / Teams)
+# Console poster (replaces ChatPoster / Teams)
 # ---------------------------------------------------------------------------
 
 class ConsolePoster:
