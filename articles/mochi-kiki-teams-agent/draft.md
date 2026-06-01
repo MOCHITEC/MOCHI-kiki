@@ -53,14 +53,6 @@ Teams 音声の自前取得には、Microsoft Graph まわりの大きな壁が�
 
 「仕様確認が必要そうな発言を検知 → 社内ドキュメントを引いて → 会議チャットに投稿」というフローを、Semantic Kernel のプラグインと通常クラスに分解しました。
 
-処理の流れは次のとおりです。
-
-1. **IntentAnalysis プラグイン** が発話を分類する (実質「spec_inquiry か、そうでないか」の判定)
-2. `spec_inquiry` なら、抽出した `keywords` を **RAGSearch サービス** に渡す
-3. RAGSearch が Azure AI Search のハイブリッド検索 (ベクトル + キーワード) で上位 3 件を取得
-4. **AnswerGeneration プラグイン** が 3 件をコンテキストにして 200 字以内に整形
-5. **ChatPoster サービス** が会議チャットへ自発的に投稿
-
 オーケストレーターは `Orchestrator.process()` です。途中で「検索ヒット 0 件」「会議が登録されていない」のケースは早期リターンで投稿せず、`[仕様補完]` プレフィックスは Python 側で付与しています。
 
 RAG 検索本体は Azure AI Search SDK の定型呼び出しなので本記事では割愛します。設定で押さえているのは次の 3 点です。
