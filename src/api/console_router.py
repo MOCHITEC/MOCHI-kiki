@@ -6,12 +6,14 @@ MOCHI-kiki 管理コンソール (frontend-bot-console) 用 aiohttp ルータ。
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import os
 import random
 import secrets
 import time
+import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Awaitable, Callable, Optional
 
@@ -19,6 +21,7 @@ import bcrypt
 import jwt
 from aiohttp import web
 
+from src.models import Utterance
 from src.storage.cosmos_client import CosmosClient
 from src.transcript.recall_client import RecallBotClient
 
@@ -101,6 +104,12 @@ class ConsoleRouter:
         self._login_limiter = _LoginRateLimiter(
             window=LOGIN_RATE_LIMIT_WINDOW, max_attempts=LOGIN_RATE_LIMIT_MAX
         )
+        # オプション: テスト用 simulate_meeting で orchestrator.process を呼ぶ
+        self._orchestrator = None  # type: ignore[assignment]
+
+    def set_orchestrator(self, orchestrator) -> None:
+        """テスト endpoint simulate_meeting で utterance を流すために orchestrator を inject。"""
+        self._orchestrator = orchestrator
 
     # --- 登録 ---
     def register(self, app: web.Application) -> None:
@@ -130,6 +139,10 @@ class ConsoleRouter:
         app.router.add_get(
             "/api/console/meetings/{meeting_id}/timeline",
             self._get_timeline,
+        )
+        app.router.add_post(
+            "/api/console/test/simulate_meeting",
+            self._test_simulate_meeting,
         )
 
     # --- JWT helpers ---
@@ -439,6 +452,99 @@ class ConsoleRouter:
             return _err("meeting_not_found", "meeting が見つかりません", 404)
         blocks = item.get("timeline_blocks") or []
         return web.json_response({"meeting_id": meeting_id, "blocks": blocks})
+
+    async def _test_simulate_meeting(self, request: web.Request) -> web.Response:
+        """テスト用: ダミー utterance 配列を流して議事録生成を試す。
+
+        body: {
+          "meeting_id": "test-...",  // 既存 or 新規
+          "bot_name": "MOCHI-kiki",
+          "delay_seconds": 0.5,       // 各 utterance を流す間隔 (デフォルト 0.5 秒)
+          "utterances": [
+            {"speaker": "...", "text": "..."},
+            ...
+          ]
+        }
+        """
+        if not self._require_auth(request):
+            return _err("unauthorized", "認証が必要です", 401)
+
+        try:
+            body = await request.json()
+        except (json.JSONDecodeError, ValueError):
+            return _err("invalid_body", "JSON 形式の body が必要です", 400)
+
+        meeting_id = (body.get("meeting_id") or "").strip()
+        if not meeting_id:
+            meeting_id = f"test-sim-{int(time.time())}"
+        bot_name = (body.get("bot_name") or "MOCHI-kiki").strip()
+        delay = float(body.get("delay_seconds") or 0.5)
+        utts_raw = body.get("utterances") or []
+        if not isinstance(utts_raw, list) or not utts_raw:
+            return _err("invalid_body", "utterances 配列が必要です", 400)
+
+        # 既存 meeting の有無を確認、無ければ作成
+        existing = await self._cosmos.get_meeting_for_console(meeting_id)
+        if existing is None:
+            now = _now_utc()
+            meeting_item = {
+                "id": meeting_id,
+                "thread_id": "test-sim",
+                "organizer_id": "test",
+                "started_at": _iso(now),
+                "ended_at": None,
+                "transcript_subscription_id": None,
+                "recall_bot_id": f"sim-{uuid.uuid4()}",
+                "transcript_source": "test-simulate",
+                "meeting_url": "https://teams.live.com/test-simulate",
+                "bot_name": bot_name,
+            }
+            await self._cosmos._meetings.upsert_item(meeting_item)  # type: ignore[attr-defined]
+
+        # バックグラウンドで utterance を順次流す
+        async def _stream() -> None:
+            for i, u in enumerate(utts_raw):
+                speaker = (u.get("speaker") or "テスト発言者").strip()
+                text = (u.get("text") or "").strip()
+                if not text:
+                    continue
+                ts = datetime.now(tz=timezone.utc)
+                utterance = Utterance(
+                    utterance_id=str(uuid.uuid4()),
+                    meeting_id=meeting_id,
+                    speaker_id=f"sim-{speaker}",
+                    speaker_name=speaker,
+                    text=text,
+                    timestamp=ts,
+                )
+                try:
+                    await self._cosmos.save_utterance(utterance)
+                except Exception:
+                    logger.exception("simulate: save_utterance failed")
+                if self._orchestrator is not None:
+                    try:
+                        await self._orchestrator.process(utterance)
+                    except Exception:
+                        logger.exception("simulate: orchestrator.process failed")
+                if i < len(utts_raw) - 1 and delay > 0:
+                    await asyncio.sleep(delay)
+            logger.info(
+                "simulate_meeting completed meeting_id=%s count=%d",
+                meeting_id, len(utts_raw),
+            )
+
+        asyncio.create_task(_stream())
+        return web.json_response(
+            {
+                "meeting_id": meeting_id,
+                "scheduled": len(utts_raw),
+                "delay_seconds": delay,
+                "view_url": (
+                    f"/meeting?id={meeting_id}"
+                ),
+            },
+            status=202,
+        )
 
     async def _transcript_txt(self, request: web.Request) -> web.Response:
         if not self._require_auth(request):

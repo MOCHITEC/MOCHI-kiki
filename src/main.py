@@ -17,6 +17,7 @@ from src.models import Utterance
 from src.api.recall_router import RecallWebhookRouter
 from src.api.console_router import build_console_router_from_env
 from src.api.static_router import register_static_router
+from src.plugins.recall_chat_poster import RecallChatPosterPlugin
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -125,6 +126,15 @@ async def main() -> None:
     # 6. set orchestrator.set_cosmos(cosmos)
     orchestrator.set_cosmos(cosmos)
 
+    # 6.a Recall.ai 経由のチャット投稿を有効化 (recall_client があれば)
+    # これで会議に Teams App を install しなくても、Recall.ai bot 経由で
+    # 会議チャットに AI 応答を投稿できる。
+    if recall_client is not None:
+        orchestrator.set_recall_chat_poster(
+            RecallChatPosterPlugin(recall_client=recall_client, cosmos=cosmos)
+        )
+        logger.info("Orchestrator: RecallChatPoster 注入完了 (Teams App install 不要ルート)")
+
     # 7. set bot._orchestrator = orchestrator
     bot._orchestrator = orchestrator
 
@@ -153,6 +163,7 @@ async def main() -> None:
             password_hash=config.console_password_hash,  # type: ignore[arg-type]
             jwt_secret=config.console_jwt_secret,  # type: ignore[arg-type]
         )
+        console.set_orchestrator(orchestrator)
         console.register(app)
         logger.info(
             "管理コンソール /api/console/* 有効化 (recall=%s)",
