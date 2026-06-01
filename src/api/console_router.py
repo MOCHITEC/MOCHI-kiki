@@ -528,6 +528,16 @@ class ConsoleRouter:
                         logger.exception("simulate: orchestrator.process failed")
                 if i < len(utts_raw) - 1 and delay > 0:
                     await asyncio.sleep(delay)
+            # 全 utterance 流し終わったら議事録を強制再生成
+            if self._orchestrator is not None and hasattr(
+                self._orchestrator, "refresh_minutes"
+            ):
+                try:
+                    await self._orchestrator.refresh_minutes(
+                        meeting_id, force=True
+                    )
+                except Exception:
+                    logger.exception("simulate: refresh_minutes failed")
             logger.info(
                 "simulate_meeting completed meeting_id=%s count=%d",
                 meeting_id, len(utts_raw),

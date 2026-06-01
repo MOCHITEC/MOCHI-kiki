@@ -308,23 +308,31 @@ class Orchestrator:
     _MINUTES_INTERVAL = timedelta(seconds=90)
     _TIMELINE_BLOCK_MIN = timedelta(minutes=5)
 
-    async def _maybe_update_live_minutes(self, meeting_id: str) -> None:
+    async def refresh_minutes(self, meeting_id: str, force: bool = False) -> bool:
+        """外部から議事録/タイムラインの再生成を明示的に呼ぶ (force=True で cooldown 無視)。"""
+        return await self._maybe_update_live_minutes(meeting_id, force=force)
+
+    async def _maybe_update_live_minutes(
+        self, meeting_id: str, force: bool = False
+    ) -> bool:
         """直前更新から _MINUTES_INTERVAL 経過していれば議事録/タイムラインを再生成。
-        失敗しても本処理 (orchestrator.process) は止めない。
+        force=True なら cooldown を無視して即更新。
+        失敗しても本処理 (orchestrator.process) は止めない。戻り値は更新したか。
         """
         if not self._cosmos or not meeting_id:
-            return
+            return False
         now = datetime.now(tz=timezone.utc)
-        last = self._last_minutes_at.get(meeting_id)
-        if last and (now - last) < self._MINUTES_INTERVAL:
-            return
+        if not force:
+            last = self._last_minutes_at.get(meeting_id)
+            if last and (now - last) < self._MINUTES_INTERVAL:
+                return False
         self._last_minutes_at[meeting_id] = now
         try:
             utterances = await self._cosmos.list_utterances_for_meeting(
                 meeting_id, limit=2000
             )
             if not utterances:
-                return
+                return False
             # 議事録 Markdown
             markdown = await self._minutes_gen.generate(utterances)
             if markdown:
@@ -336,11 +344,13 @@ class Orchestrator:
                 )
             # タイムラインブロック (5 分単位、新しい末尾ブロックのみ更新)
             await self._update_latest_timeline_block(meeting_id, utterances, now)
+            return True
         except Exception:
             import logging
             logging.getLogger(__name__).exception(
                 "live minutes update failed meeting_id=%s", meeting_id
             )
+            return False
 
     async def _update_latest_timeline_block(
         self,
