@@ -31,7 +31,7 @@ flowchart LR
     Bot -->|自発的に投稿| Teams
 ```
 
-Recall.ai bot は別途 API で会議に投入する形で、図には書いていません。
+Recall.ai のボットは別途 API で会議に投入する形で、図には書いていません。
 
 Bot プロセスの中身は Semantic Kernel で組んでおり、仕様補完パイプラインの実装は後の章で詳しく見ていきます。
 
@@ -40,12 +40,12 @@ Bot プロセスの中身は Semantic Kernel で組んでおり、仕様補完�
 Teams 音声の自前取得には、Microsoft Graph まわりの大きな壁があります。
 
 - **Communications API (Media Bot)** は ASP.NET Core ベースの C# 専用 SDK で、Linux コンテナで素直に動かしづらい
-- 会議に media bot として参加するには Teams テナント管理者の同意 (RSC など) と AAD アプリ側のリソース許可が必要
+- 会議にメディアボットとして参加するには Teams テナント管理者の同意 (RSC など) と AAD アプリ側のリソース許可が必要
 - TLS 証明書付きの公開エンドポイントが必須
 
 少人数チームが Python で 2 週間で踏破するには、どれもコストが大きすぎました。
 
-そこで第三者 SaaS の **Recall.ai** を採用しました。Teams / Zoom / Google Meet 等の会議に bot として入り、音声と文字起こしを Webhook または WebSocket で渡してくれるサービスです。
+そこで第三者 SaaS の **Recall.ai** を採用しました。Teams / Zoom / Google Meet 等の会議にボットとして入り、音声と文字起こしを Webhook または WebSocket で渡してくれるサービスです。
 
 **当初は低遅延を狙って WebSocket 経由を選びました**が、結果的にこの「低遅延を狙った」前提が後で崩れます (詳細は致命欠点章)。
 
@@ -176,7 +176,7 @@ ANSWER_PROMPT = """
 
 2 つめは **認識齟齬の検知**です。同じ単語を発言者間で違う意味に使っているケースの検出。現状は要件定義のみで実装は未着手で、これからプラグインの設計から着手します。
 
-会議の場で動く Bot を作っている方とは、ぜひ知見を交換したいです。リポジトリは現状プライベートですが、整理が済み次第公開予定です。公開時に本記事末尾へ GitHub URL を追記します。
+会議の場で動くボットを作っている方とは、ぜひ知見を交換したいです。リポジトリは現状プライベートですが、整理が済み次第公開予定です。公開時に本記事末尾へ GitHub URL を追記します。
 
 ## 参考
 
@@ -184,5 +184,4 @@ ANSWER_PROMPT = """
 - [Semantic Kernel 公式 overview](https://learn.microsoft.com/semantic-kernel/overview/) (アクセス 2026-06-01)
 - [Recall.ai Real-time WebSocket Endpoint](https://docs.recall.ai/docs/real-time-websocket-endpoint) (アクセス 2026-06-01)
 - [Azure AI Search ハイブリッド検索](https://learn.microsoft.com/azure/search/hybrid-search-overview) (アクセス 2026-06-01)
-- [Azure Cosmos DB autoscale provisioned throughput](https://learn.microsoft.com/azure/cosmos-db/provision-throughput-autoscale) (アクセス 2026-06-01)
 - [Azure Container Apps overview](https://learn.microsoft.com/azure/container-apps/overview) (アクセス 2026-06-01)
