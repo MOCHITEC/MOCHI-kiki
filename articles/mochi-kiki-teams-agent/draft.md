@@ -5,7 +5,7 @@ Teams の会議でこんな経験はないでしょうか。
 - 用語や仕様の確認のために誰かが画面共有でドキュメントを探し始めて、会議の流れが止まる
 - 「〇〇って何でしたっけ？」と社内仕様や用語を聞かれて答えに詰まる
 
-会議後の要約・アクション抽出は Microsoft 365 Copilot Recap で十分まかなえます。ただ Copilot は **会議が終わってから動く** 設計のため、会議中の用語不明や仕様確認の場面では助けてくれません。
+会議後の要約・アクション抽出は [Intelligent Recap](https://learn.microsoft.com/microsoftteams/intelligent-recap-calls-meetings) で十分まかなえます。ただ Intelligent Recap は **会議が終わってから動く** 機能のため、会議中の用語不明や仕様確認の場面では助けてくれません。
 
 そこを埋める「会議の場で動く相棒」を目指して、ボットエージェント **MOCHI-kiki** を作りました。きっかけは [Microsoft Agent Hackathon 2026](https://zenn.dev/hackathons/microsoft-agent-hackathon-2026) への参加で、技術選定の一部は「Azure + Microsoft AI」の枠に合わせています。
 

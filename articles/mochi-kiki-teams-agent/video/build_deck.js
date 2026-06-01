@@ -146,7 +146,7 @@ const TOTAL = 12;
   s.addShape(pres.shapes.RECTANGLE, {
     x: 5.1, y: cardY, w: 0.08, h: cardH, fill: { color: COLOR.amber }, line: { color: COLOR.amber },
   });
-  s.addText("Copilot Recap", {
+  s.addText("Intelligent Recap", {
     x: 5.4, y: cardY + 0.2, w: 4.1, h: 0.35,
     fontSize: 12, color: COLOR.amber, fontFace: FONT_HEAD, bold: true, margin: 0,
   });
@@ -165,7 +165,7 @@ const TOTAL = 12;
     [
       "[0:15–0:30 / 15 秒]",
       "",
-      "Copilot Recap は、会議後の要約や Action 抽出は十分まかなえます。",
+      "Intelligent Recap は、会議後の要約や Action 抽出は十分まかなえます。",
       "ただ、会議の最中には動きません。",
       "会議中の用語確認や、認識合わせは、別の仕組みが要ります。",
     ].join("\n")
