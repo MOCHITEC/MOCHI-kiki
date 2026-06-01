@@ -15,6 +15,9 @@ from src.plugins.rag_search import RAGSearchPlugin
 from src.plugins.answer_generation import AnswerGenerationPlugin
 from src.plugins.chat_poster import ChatPosterPlugin
 from src.plugins.recall_chat_poster import RecallChatPosterPlugin
+from src.plugins.minutes_generator import MinutesGeneratorPlugin
+from src.plugins.timeline_summarizer import TimelineSummarizerPlugin
+from datetime import datetime, timezone, timedelta
 
 
 class Orchestrator:
@@ -63,6 +66,12 @@ class Orchestrator:
         self._poster = ChatPosterPlugin(adapter, app_id)
         # Recall.ai 経由でチャット投稿する poster は set_recall_chat_poster で後注入
         self._recall_poster: Optional[RecallChatPosterPlugin] = None
+        # ライブ議事録生成
+        self._minutes_gen = MinutesGeneratorPlugin(kernel)
+        self._timeline_sum = TimelineSummarizerPlugin(kernel)
+        # 最後に更新した時刻 (meeting_id -> datetime)
+        self._last_minutes_at: Dict[str, datetime] = {}
+        self._last_timeline_block_start: Dict[str, datetime] = {}
         self._conversation_references: Dict[str, ConversationReference] = {}
         self._speaker_references: Dict[str, ConversationReference] = {}
         self._pending_sessions: Dict[str, str] = {}
@@ -131,6 +140,10 @@ class Orchestrator:
         return result
 
     async def process(self, utterance: Utterance) -> None:
+        # 議事録・タイムラインの非同期更新 (失敗しても本処理は止めない)
+        import asyncio
+        asyncio.create_task(self._maybe_update_live_minutes(utterance.meeting_id))
+
         intent_result = await self._intent.analyze(utterance.text)
 
         if intent_result.intent == IntentLabel.SPEC_INQUIRY:
@@ -290,3 +303,100 @@ class Orchestrator:
                 summary=summary,
             )
             await self._cosmos.save_clarification_session(updated)
+
+    # === ライブ議事録 / タイムライン ===
+    _MINUTES_INTERVAL = timedelta(seconds=90)
+    _TIMELINE_BLOCK_MIN = timedelta(minutes=5)
+
+    async def _maybe_update_live_minutes(self, meeting_id: str) -> None:
+        """直前更新から _MINUTES_INTERVAL 経過していれば議事録/タイムラインを再生成。
+        失敗しても本処理 (orchestrator.process) は止めない。
+        """
+        if not self._cosmos or not meeting_id:
+            return
+        now = datetime.now(tz=timezone.utc)
+        last = self._last_minutes_at.get(meeting_id)
+        if last and (now - last) < self._MINUTES_INTERVAL:
+            return
+        self._last_minutes_at[meeting_id] = now
+        try:
+            utterances = await self._cosmos.list_utterances_for_meeting(
+                meeting_id, limit=2000
+            )
+            if not utterances:
+                return
+            # 議事録 Markdown
+            markdown = await self._minutes_gen.generate(utterances)
+            if markdown:
+                await self._cosmos.upsert_minutes(
+                    meeting_id=meeting_id,
+                    markdown=markdown,
+                    utterance_count=len(utterances),
+                    updated_at_iso=now.isoformat(),
+                )
+            # タイムラインブロック (5 分単位、新しい末尾ブロックのみ更新)
+            await self._update_latest_timeline_block(meeting_id, utterances, now)
+        except Exception:
+            import logging
+            logging.getLogger(__name__).exception(
+                "live minutes update failed meeting_id=%s", meeting_id
+            )
+
+    async def _update_latest_timeline_block(
+        self,
+        meeting_id: str,
+        utterances: list,
+        now: datetime,
+    ) -> None:
+        """末尾の 5 分ブロックを再要約する。
+        各 utterance の timestamp を見て、最後の utterance の属する 5 分窓を再計算。
+        過去の確定ブロックには触らない (再要約しない)。
+        """
+        if not utterances:
+            return
+        # utterance を時系列 sorted (cosmos query で既に asc のはず)
+        def _ts(u):
+            return u.get("timestamp") or ""
+        utterances = sorted(utterances, key=_ts)
+        # 末尾 utterance の時刻
+        last_ts_raw = utterances[-1].get("timestamp")
+        if not last_ts_raw:
+            return
+        try:
+            last_ts = datetime.fromisoformat(last_ts_raw.replace("Z", "+00:00"))
+        except Exception:
+            return
+        # 5 分窓の start (floor)
+        epoch = datetime(2000, 1, 1, tzinfo=timezone.utc)
+        delta = last_ts - epoch
+        block_seconds = int(self._TIMELINE_BLOCK_MIN.total_seconds())
+        floor_seconds = (int(delta.total_seconds()) // block_seconds) * block_seconds
+        block_start = epoch + timedelta(seconds=floor_seconds)
+        block_end = block_start + self._TIMELINE_BLOCK_MIN
+        # ブロック内の utterance を抽出
+        in_block: list = []
+        for u in utterances:
+            ts_raw = u.get("timestamp")
+            if not ts_raw:
+                continue
+            try:
+                ts = datetime.fromisoformat(ts_raw.replace("Z", "+00:00"))
+            except Exception:
+                continue
+            if block_start <= ts < block_end:
+                in_block.append(u)
+        if not in_block:
+            return
+        summary = await self._timeline_sum.summarize_block(in_block)
+        if not summary:
+            return
+        await self._cosmos.upsert_timeline_block(
+            meeting_id=meeting_id,
+            block={
+                "start_iso": block_start.isoformat(),
+                "end_iso": block_end.isoformat(),
+                "summary": summary,
+                "utterance_count": len(in_block),
+                "updated_at": now.isoformat(),
+            },
+        )

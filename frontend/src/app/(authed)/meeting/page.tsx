@@ -38,7 +38,24 @@ function MeetingDetailInner() {
     enabled: !!meetingId,
   });
 
+  const minutesQuery = useQuery({
+    queryKey: ["minutes", meetingId],
+    queryFn: () => api.getMinutes(meetingId),
+    refetchInterval: 30000,
+    enabled: !!meetingId,
+  });
+
+  const timelineQuery = useQuery({
+    queryKey: ["timeline", meetingId],
+    queryFn: () => api.getTimeline(meetingId),
+    refetchInterval: 30000,
+    enabled: !!meetingId,
+  });
+
   const [confirmLeave, setConfirmLeave] = React.useState(false);
+  const [tab, setTab] = React.useState<"transcript" | "minutes" | "timeline">(
+    "minutes",
+  );
 
   const leave = useMutation({
     mutationFn: (botId: string) => api.leaveBot(botId),
@@ -151,36 +168,97 @@ function MeetingDetailInner() {
 
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">文字起こし</h2>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex gap-1 rounded-md border border-zinc-200 p-0.5 dark:border-zinc-800">
+              <button
+                type="button"
+                onClick={() => setTab("minutes")}
+                className={`rounded px-3 py-1 text-sm transition-colors ${
+                  tab === "minutes"
+                    ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
+                    : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+                }`}
+              >
+                議事録
+              </button>
+              <button
+                type="button"
+                onClick={() => setTab("timeline")}
+                className={`rounded px-3 py-1 text-sm transition-colors ${
+                  tab === "timeline"
+                    ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
+                    : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+                }`}
+              >
+                タイムライン
+              </button>
+              <button
+                type="button"
+                onClick={() => setTab("transcript")}
+                className={`rounded px-3 py-1 text-sm transition-colors ${
+                  tab === "transcript"
+                    ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
+                    : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+                }`}
+              >
+                文字起こし
+              </button>
+            </div>
             <span className="text-xs text-zinc-500">
-              5 秒ごとに自動更新 ({utterances.length} 件)
+              {tab === "minutes" &&
+                `議事録 (30 秒ごと更新${
+                  minutesQuery.data?.updated_at
+                    ? ` · 最終 ${formatDateTime(minutesQuery.data.updated_at)}`
+                    : ""
+                })`}
+              {tab === "timeline" &&
+                `タイムライン (30 秒ごと更新 · ${
+                  timelineQuery.data?.blocks?.length ?? 0
+                } ブロック)`}
+              {tab === "transcript" &&
+                `文字起こし (5 秒ごと更新 · ${utterances.length} 件)`}
             </span>
           </div>
         </CardHeader>
         <CardContent>
-          {utterancesQuery.isLoading ? (
-            <div className="py-8 text-center text-sm text-zinc-500">
-              読み込み中...
-            </div>
-          ) : utterances.length === 0 ? (
-            <div className="py-8 text-center text-sm text-zinc-500">
-              発話はまだありません
-            </div>
-          ) : (
-            <div className="space-y-4 font-mono text-sm">
-              {utterances.map((u, i) => (
-                <div
-                  key={u.utterance_id ?? `${u.timestamp}-${i}`}
-                  className="border-l-2 border-zinc-200 pl-3 dark:border-zinc-800"
-                >
-                  <div className="text-xs text-zinc-500">
-                    [{u.timestamp}] {u.speaker || "(不明)"}:
-                  </div>
-                  <div className="whitespace-pre-wrap">{u.text}</div>
+          {tab === "minutes" && (
+            <MinutesView
+              loading={minutesQuery.isLoading}
+              markdown={minutesQuery.data?.markdown ?? ""}
+            />
+          )}
+          {tab === "timeline" && (
+            <TimelineView
+              loading={timelineQuery.isLoading}
+              blocks={timelineQuery.data?.blocks ?? []}
+            />
+          )}
+          {tab === "transcript" && (
+            <>
+              {utterancesQuery.isLoading ? (
+                <div className="py-8 text-center text-sm text-zinc-500">
+                  読み込み中...
                 </div>
-              ))}
-            </div>
+              ) : utterances.length === 0 ? (
+                <div className="py-8 text-center text-sm text-zinc-500">
+                  発話はまだありません
+                </div>
+              ) : (
+                <div className="space-y-4 font-mono text-sm">
+                  {utterances.map((u, i) => (
+                    <div
+                      key={u.utterance_id ?? `${u.timestamp}-${i}`}
+                      className="border-l-2 border-zinc-200 pl-3 dark:border-zinc-800"
+                    >
+                      <div className="text-xs text-zinc-500">
+                        [{u.timestamp}] {u.speaker || "(不明)"}:
+                      </div>
+                      <div className="whitespace-pre-wrap">{u.text}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
@@ -213,6 +291,83 @@ function MeetingDetailInner() {
           </Button>
         </DialogFooter>
       </Dialog>
+    </div>
+  );
+}
+
+function MinutesView({
+  loading,
+  markdown,
+}: {
+  loading: boolean;
+  markdown: string;
+}) {
+  if (loading) {
+    return (
+      <div className="py-8 text-center text-sm text-zinc-500">
+        議事録を生成中...
+      </div>
+    );
+  }
+  if (!markdown) {
+    return (
+      <div className="py-8 text-center text-sm text-zinc-500">
+        議事録はまだ生成されていません。会議で発話があると 1〜2 分で更新されます。
+      </div>
+    );
+  }
+  return (
+    <pre className="whitespace-pre-wrap rounded-md bg-zinc-50 p-4 font-sans text-sm leading-relaxed text-zinc-900 dark:bg-zinc-900 dark:text-zinc-50">
+      {markdown}
+    </pre>
+  );
+}
+
+function TimelineView({
+  loading,
+  blocks,
+}: {
+  loading: boolean;
+  blocks: import("@/lib/types").TimelineBlock[];
+}) {
+  if (loading) {
+    return (
+      <div className="py-8 text-center text-sm text-zinc-500">
+        タイムラインを生成中...
+      </div>
+    );
+  }
+  if (!blocks.length) {
+    return (
+      <div className="py-8 text-center text-sm text-zinc-500">
+        タイムラインはまだ生成されていません。会議で発話があると 1〜2 分で更新されます。
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-3">
+      {blocks
+        .slice()
+        .reverse()
+        .map((b) => (
+          <div
+            key={b.start_iso}
+            className="rounded-md border border-zinc-200 bg-white p-3 text-sm dark:border-zinc-800 dark:bg-zinc-950"
+          >
+            <div className="mb-1 flex items-center justify-between">
+              <span className="font-mono text-xs text-zinc-500">
+                {formatDateTime(b.start_iso)} 〜{" "}
+                {b.end_iso.slice(11, 19)}
+              </span>
+              <span className="text-xs text-zinc-400">
+                {b.utterance_count} 件
+              </span>
+            </div>
+            <p className="text-sm leading-relaxed text-zinc-900 dark:text-zinc-50">
+              {b.summary}
+            </p>
+          </div>
+        ))}
     </div>
   );
 }

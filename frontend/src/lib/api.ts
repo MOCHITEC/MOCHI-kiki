@@ -5,6 +5,8 @@ import type {
   CreateBotResponse,
   Meeting,
   MeetingListResponse,
+  MinutesResponse,
+  TimelineResponse,
   UtteranceListResponse,
 } from "./types";
 
@@ -17,6 +19,8 @@ export class ApiError extends Error {
     this.code = code;
   }
 }
+
+const LOGIN_PATH = "/api/console/auth/login";
 
 async function request<T>(
   path: string,
@@ -47,6 +51,17 @@ async function request<T>(
     const err = body as ApiErrorBody | null;
     const code = err?.error?.code ?? "unknown_error";
     const message = err?.error?.message ?? res.statusText;
+    if (
+      res.status === 401 &&
+      path !== LOGIN_PATH &&
+      typeof window !== "undefined" &&
+      window.location.pathname !== "/login"
+    ) {
+      const next = window.location.pathname + window.location.search;
+      window.location.replace(
+        `/login?next=${encodeURIComponent(next)}`,
+      );
+    }
     throw new ApiError(res.status, code, message);
   }
 
@@ -111,5 +126,15 @@ export const api = {
   },
   transcriptUrl(meetingId: string): string {
     return `/api/console/meetings/${encodeURIComponent(meetingId)}/transcript.txt`;
+  },
+  getMinutes(meetingId: string): Promise<MinutesResponse> {
+    return request<MinutesResponse>(
+      `/api/console/meetings/${encodeURIComponent(meetingId)}/minutes`,
+    );
+  },
+  getTimeline(meetingId: string): Promise<TimelineResponse> {
+    return request<TimelineResponse>(
+      `/api/console/meetings/${encodeURIComponent(meetingId)}/timeline`,
+    );
   },
 };

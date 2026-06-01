@@ -17,7 +17,11 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     if (q.isError) {
       const err = q.error;
       if (err instanceof ApiError && err.status === 401) {
-        router.replace("/login");
+        const next =
+          typeof window !== "undefined"
+            ? window.location.pathname + window.location.search
+            : "/";
+        router.replace(`/login?next=${encodeURIComponent(next)}`);
       }
     }
   }, [q.isError, q.error, router]);

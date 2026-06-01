@@ -123,6 +123,14 @@ class ConsoleRouter:
             "/api/console/meetings/{meeting_id}/transcript.txt",
             self._transcript_txt,
         )
+        app.router.add_get(
+            "/api/console/meetings/{meeting_id}/minutes",
+            self._get_minutes,
+        )
+        app.router.add_get(
+            "/api/console/meetings/{meeting_id}/timeline",
+            self._get_timeline,
+        )
 
     # --- JWT helpers ---
     def _issue_jwt(self, username: str) -> str:
@@ -405,6 +413,32 @@ class ConsoleRouter:
             for it in items
         ]
         return web.json_response({"utterances": utterances})
+
+    async def _get_minutes(self, request: web.Request) -> web.Response:
+        if not self._require_auth(request):
+            return _err("unauthorized", "認証が必要です", 401)
+        meeting_id = request.match_info["meeting_id"]
+        item = await self._cosmos.get_meeting_for_console(meeting_id)
+        if not item:
+            return _err("meeting_not_found", "meeting が見つかりません", 404)
+        return web.json_response(
+            {
+                "meeting_id": meeting_id,
+                "markdown": item.get("minutes_markdown") or "",
+                "updated_at": item.get("minutes_updated_at"),
+                "utterance_count": item.get("minutes_utterance_count", 0),
+            }
+        )
+
+    async def _get_timeline(self, request: web.Request) -> web.Response:
+        if not self._require_auth(request):
+            return _err("unauthorized", "認証が必要です", 401)
+        meeting_id = request.match_info["meeting_id"]
+        item = await self._cosmos.get_meeting_for_console(meeting_id)
+        if not item:
+            return _err("meeting_not_found", "meeting が見つかりません", 404)
+        blocks = item.get("timeline_blocks") or []
+        return web.json_response({"meeting_id": meeting_id, "blocks": blocks})
 
     async def _transcript_txt(self, request: web.Request) -> web.Response:
         if not self._require_auth(request):

@@ -48,3 +48,23 @@ export interface ApiErrorBody {
     message: string;
   };
 }
+
+export interface MinutesResponse {
+  meeting_id: string;
+  markdown: string;
+  updated_at: string | null;
+  utterance_count: number;
+}
+
+export interface TimelineBlock {
+  start_iso: string;
+  end_iso: string;
+  summary: string;
+  utterance_count: number;
+  updated_at?: string;
+}
+
+export interface TimelineResponse {
+  meeting_id: string;
+  blocks: TimelineBlock[];
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,8 +26,22 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
+function safeNext(raw: string | null): string {
+  if (!raw) return "/meetings";
+  if (!raw.startsWith("/") || raw.startsWith("//")) return "/meetings";
+  if (raw === "/login" || raw.startsWith("/login?")) return "/meetings";
+  return raw;
+}
+
 export default function LoginPage() {
   const router = useRouter();
+  const [nextPath, setNextPath] = useState<string>("/meetings");
+
+  useEffect(() => {
+    const raw = new URLSearchParams(window.location.search).get("next");
+    setNextPath(safeNext(raw));
+  }, []);
+
   const me = useQuery({
     queryKey: ["me"],
     queryFn: () => api.me(),
@@ -36,9 +50,9 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (me.data) {
-      router.replace("/meetings");
+      router.replace(nextPath);
     }
-  }, [me.data, router]);
+  }, [me.data, router, nextPath]);
 
   const {
     register,
@@ -54,7 +68,7 @@ export default function LoginPage() {
       api.login(values.username, values.password),
     onSuccess: () => {
       toast.success("ログインしました");
-      router.push("/meetings");
+      router.push(nextPath);
       router.refresh();
     },
     onError: (err) => {

@@ -207,5 +207,50 @@ class CosmosClient:
             return 0
         return 0
 
+    async def upsert_minutes(
+        self,
+        meeting_id: str,
+        markdown: str,
+        utterance_count: int,
+        updated_at_iso: str,
+    ) -> bool:
+        """meetings コンテナのレコードに議事録 Markdown を保存する。"""
+        item = await self.get_meeting_for_console(meeting_id)
+        if not item:
+            return False
+        item["minutes_markdown"] = markdown
+        item["minutes_utterance_count"] = utterance_count
+        item["minutes_updated_at"] = updated_at_iso
+        await self._meetings.upsert_item(item)
+        return True
+
+    async def upsert_timeline_block(
+        self,
+        meeting_id: str,
+        block: dict,
+    ) -> bool:
+        """meetings コンテナの timeline_blocks 配列に block を追加 / 更新する。
+        block は {start_iso, end_iso, summary, utterance_count} を想定。
+        既に同じ start_iso のブロックがあれば置換する。
+        """
+        item = await self.get_meeting_for_console(meeting_id)
+        if not item:
+            return False
+        blocks = item.get("timeline_blocks") or []
+        start = block.get("start_iso")
+        replaced = False
+        for i, b in enumerate(blocks):
+            if b.get("start_iso") == start:
+                blocks[i] = block
+                replaced = True
+                break
+        if not replaced:
+            blocks.append(block)
+        # 時系列順を保証
+        blocks.sort(key=lambda b: b.get("start_iso") or "")
+        item["timeline_blocks"] = blocks
+        await self._meetings.upsert_item(item)
+        return True
+
     async def close(self) -> None:
         await self._azure_client.close()
