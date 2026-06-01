@@ -146,7 +146,7 @@ const TOTAL = 12;
   s.addShape(pres.shapes.RECTANGLE, {
     x: 5.1, y: cardY, w: 0.08, h: cardH, fill: { color: COLOR.amber }, line: { color: COLOR.amber },
   });
-  s.addText("Intelligent Recap", {
+  s.addText("Web 会議の議事録システム", {
     x: 5.4, y: cardY + 0.2, w: 4.1, h: 0.35,
     fontSize: 12, color: COLOR.amber, fontFace: FONT_HEAD, bold: true, margin: 0,
   });
@@ -165,9 +165,9 @@ const TOTAL = 12;
     [
       "[0:15–0:30 / 15 秒]",
       "",
-      "Intelligent Recap は、会議後の要約や Action 抽出は十分まかなえます。",
+      "Web 会議の議事録システムは、会議後の要約や Action 抽出はひと通りまかなえます。",
       "ただ、会議の最中には動きません。",
-      "会議中の用語確認や、認識合わせは、別の仕組みが要ります。",
+      "会議中の用語確認や認識合わせは、別の仕組みが要ります。",
     ].join("\n")
   );
 }
