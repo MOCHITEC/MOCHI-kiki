@@ -7,7 +7,7 @@ Teams の会議でこんな経験はないでしょうか。
 
 会議後の要約・アクション抽出は Microsoft 365 Copilot Recap で十分まかなえます。ただ Copilot は **会議が終わってから動く** 設計のため、会議中の用語不明や仕様確認の場面では助けてくれません。
 
-そこを埋める「会議の場で動く相棒」を目指して、Bot エージェント **MOCHI-kiki** を作りました。きっかけは [Microsoft Agent Hackathon 2026](https://zenn.dev/hackathons/microsoft-agent-hackathon-2026) への参加で、技術選定の一部は「Azure + Microsoft AI」の枠に合わせています。
+そこを埋める「会議の場で動く相棒」を目指して、ボットエージェント **MOCHI-kiki** を作りました。きっかけは [Microsoft Agent Hackathon 2026](https://zenn.dev/hackathons/microsoft-agent-hackathon-2026) への参加で、技術選定の一部は「Azure + Microsoft AI」の枠に合わせています。
 
 MVP は 2 機能で構成しています。1 つは **仕様補完**で、仕様確認発言を検知して社内ドキュメントを引き、200 字の回答を会議チャットへボット側から自発的に投稿します (Bot Framework でいう proactive メッセージ)。もう 1 つは **ライブ議事録ビュー**で、会議の発話から議事録とタイムラインをライブ生成し、管理コンソールで閲覧できます (会議チャットには投稿しません)。
 
@@ -23,10 +23,10 @@ MVP は 2 機能で構成しています。1 つは **仕様補完**で、仕様
 
 ```mermaid
 flowchart LR
-    Teams[Microsoft Teams] -->|音声 + 文字起こし| Recall[Recall.ai bot]
+    Teams[Microsoft Teams] -->|音声 + 文字起こし| Recall[Recall.ai のボット]
     Recall -->|WebSocket| Bot[Bot プロセス / Azure Container Apps]
-    Bot -->|chat + embedding| AOAI[(Azure OpenAI GPT-4o)]
-    Bot -->|hybrid search| Search[(Azure AI Search)]
+    Bot -->|チャット + Embedding| AOAI[(Azure OpenAI GPT-4o)]
+    Bot -->|ハイブリッド検索| Search[(Azure AI Search)]
     Bot -->|永続化| Cosmos[(Cosmos DB)]
     Bot -->|自発的に投稿| Teams
 ```
